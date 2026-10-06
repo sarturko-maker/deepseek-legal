@@ -1,5 +1,7 @@
 # AGENTS.md
 
+For this DeepSeek Legal fork, read [WINDOWS_HANDOVER.md](WINDOWS_HANDOVER.md) and the single [implementation plan](IMPLEMENTATION_PLAN.md) first. Continue on the user's personal Windows PC using native Harness Desktop. Linux adaptation and mandatory Web-first testing are outside this MVP. Preserve the upstream instructions below.
+
 DeepSeek Harness is an all-plugin Cordis agent harness. Read [docs/architecture.md](docs/architecture.md) before changing `packages/`; follow [docs/AGENTS.md](docs/AGENTS.md) for documentation.
 
 ## Pre-stable APIs and released Session data
