@@ -2,15 +2,17 @@
 
 Prepared 6 October 2026. This is a continuation guide for the user and the next Codex session. [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) is the single current plan and records architecture, acceptance requirements and progress.
 
+Continuation is authorized. Phase 1 native launch, repository selection, existing DOCX preview and live-model chat passed on `feat/windows-desktop-baseline`. The independent [legal bundle](legal/README.md) now implements and tests the tracked document engine and guarded storage. Read the [staged implementation](IMPLEMENTATION_PLAN.md#staged-implementation) before continuing. Upstream application source remains at the pinned baseline; the local editor and Desktop integration are next.
+
 **Start directly in native Windows Harness Desktop.** The user has moved this project to their personal Windows PC. The earlier Web-first route and proposed Linux Desktop adaptation are superseded. Use the supported Windows application and its normal upstream development commands. Do not implement Linux targets, patch the Desktop launcher for Linux, set up Wine/Xvfb, or require a Web prototype before Desktop work.
 
 ## What this checkout contains
 
-- Unmodified Harness application source at upstream tag `dsh-v0.2.0-rc.2`, commit `639ed015397290b3745d163aafe02ffee4aa3f84`, with upstream Git history and licence notices preserved.
+- Unmodified Harness application source at upstream tag `dsh-v0.2.0-rc.2`, with upstream Git history and licence notices preserved.
 - The discovery findings, proposed integration and phased plan, revised for Windows development and testing.
 - This guide and a pointer in root `AGENTS.md`, so the next agent can recover the project without the previous chat. The root agent-document word budget is increased only to accommodate that pointer with the required headroom.
 
-No Commercial Agent integration, editor bridge, custom playbook or product tests have been implemented. No Windows launch or acceptance test has passed in this work. Windows Desktop is supported upstream; record actual results on this PC before claiming a baseline pass. The upstream root README remains unchanged.
+The optional legal bundle implements open/read/redline tools backed by ADEU 3.0.6 and an immutable original with guarded working generations. Its build and focused tests pass; it has not been installed in Desktop or tested with a live model. The editor bridge, Commercial Agent preset, playbook and automatic human–agent handover remain unimplemented. Native Desktop opens, previews the synthetic DOCX and completes ordinary live chat. The upstream root README remains unchanged.
 
 The user authorized the handoff push to `https://github.com/sarturko-maker/deepseek-legal`. It was already public; its visibility was not changed. Product implementation was awaiting approval before the move. A new instruction such as “continue with implementation” authorizes the proposed incremental work; do not ask for that same permission again. Preserve existing permission controls and local changes.
 
@@ -41,31 +43,32 @@ Use the strongest suitable available model for architecture and verification; ve
 
 ## Normal Windows baseline setup
 
-The source references are [upstream setup](docs/development.md#setup-tutorial), [Desktop development](apps/desktop/README.md#develop), [root scripts](package.json), and [runtime lock](scripts/primary-runtime/lock.json). These commands are source-verified instructions for the Windows session; they have not been executed on Windows during this handoff. The continuing agent owns that verification.
+The source references are [upstream setup](docs/development.md#setup-tutorial), [Desktop development](apps/desktop/README.md#develop), [root scripts](package.json), and [runtime lock](scripts/primary-runtime/lock.json). The [Windows baseline evidence](IMPLEMENTATION_PLAN.md#windows-baseline) records this checkout's executed setup commands, Electron download retry and successful native launch.
 
-Use a supported native Node installation: the root engine permits `^22.19.0 || >=24.0.0`, and the checked-in runtime lock pins Node `24.21.0`. The repository pins pnpm `11.7.0`. With Node and Corepack available, use the standard sequence from the repository root:
+Use a supported native Node installation: the root engine permits `^22.19.0 || >=24.0.0`, and the checked-in runtime lock pins Node `24.21.0`. The repository pins pnpm `11.7.0`. This PC has supported Node `24.19.0`; `corepack enable` encountered a Windows access denial, while direct Corepack invocation successfully resolved `11.7.0`. The setup commands executed from the repository root are:
 
 ```powershell
 node --version
-corepack enable
-pnpm --version
-pnpm install --frozen-lockfile
-pnpm run typecheck
-pnpm run dev:desktop
+corepack pnpm --version
+corepack pnpm install --frozen-lockfile
+corepack pnpm run typecheck
+corepack pnpm run dev:desktop
 ```
 
 Use normal Windows setup for a missing prerequisite. Follow the actual upstream diagnostic if a native dependency needs build tools; do not add platform workarounds speculatively. The upstream development command builds the application and prepares its locked runtime. Initial setup may download dependencies. After a successful build, `pnpm run start:desktop` launches without rebuilding; rebuild after source changes.
 
 The normal development launcher isolates application state and Electron data under the ignored `apps/desktop/.desktop-build/development/` tree. Use that default, not an existing personal Harness profile. No signed installer, signing certificate, updater deployment or Linux Harness setup is required for this experiment. Configure the existing model connection locally and keep credentials out of Git and tool output.
 
+This checkout now has an ignored credential file at `apps/desktop/.desktop-build/development/home/.env`. The user populated the full DeepSeek key after `DEEPSEEK_API_KEY=` on line 2; Desktop was restarted and completed a live chat. For future key changes, edit that value, save the file and restart Desktop. This is the development Harness home supplied by the normal launcher; its existing credential loader reads the file. The [baseline evidence](IMPLEMENTATION_PLAN.md#windows-baseline) records Git-ignore verification, model selection, the existing session-log setting, completed checks and launch prerequisites.
+
 ## Integration work that still needs doing
 
-Windows removes the need for a Linux Desktop adaptation. It does not supply the interactive contract integration. Use the plan's shared Harness plugins, an embedded Collabora CODE editor and the ADEU Node SDK; keep legal instructions in a reusable skill and editable Markdown playbook.
+The [staged implementation](IMPLEMENTATION_PLAN.md#staged-implementation) defines the remaining editor, handover and acceptance work. Preserve the independent bundle layout under `legal/` so deliberate Harness updates can be tested without carrying agent-loop or UI patches. Use embedded Collabora CODE and keep legal instructions in a reusable skill and editable Markdown playbook.
 
 | Dependency or reference | Pinned discovery baseline | Windows action |
 |---|---|---|
-| Harness | Source included at `639ed015397290b3745d163aafe02ffee4aa3f84` | Establish the normal native Desktop baseline. |
-| ADEU | `@adeu/core` 3.0.6; source commit `965736d2d8ea32f42ed9a2a0a01b3c5a538f7f75` | Add the pinned SDK during implementation; inspect the source/tests as needed. Not installed in this handoff. |
+| Harness | Source included at `dsh-v0.2.0-rc.2` | Establish the normal native Desktop baseline. |
+| ADEU | `@adeu/core` 3.0.6; source commit `965736d2d8ea32f42ed9a2a0a01b3c5a538f7f75` | Installed and locked in the separate legal bundle; real engine round-trip tests pass. |
 | Collabora CODE | 26.04.1.4; image `collabora/code@sha256:75859dc9f9084d1877ce36cf96ec86600f495bade33289c9cbc27e0a0ee23b81` | Prepare a dedicated local instance and verify the actual running version and Windows host callbacks. |
 | LQ fork | `sarturko-maker/lq-ai-fork` at `82904157a155ad2926e4ba64447087f7ef1cdb45` | Reference its iframe/WOPI/snapshot patterns; do not import the whole application or its local data. |
 

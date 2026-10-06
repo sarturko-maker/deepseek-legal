@@ -1,0 +1,5 @@
+- insert:
+    - id: deepseek-legal-redlining
+      name: ./dist/index.js
+      config:
+        storageDirectory: !!js dshHomePath('legal-documents')
