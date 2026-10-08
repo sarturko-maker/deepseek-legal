@@ -1,0 +1,12 @@
+name: deepseek-legal-editor
+services:
+  code:
+    image: collabora/code@sha256:75859dc9f9084d1877ce36cf96ec86600f495bade33289c9cbc27e0a0ee23b81
+    ports:
+      - "127.0.0.1:${LEGAL_EDITOR_PORT:-9980}:9980"
+    environment:
+      aliasgroup1: "http://host.docker.internal:${LEGAL_HOST_PORT:-19387}"
+      extra_params: "--o:ssl.enable=false --o:ssl.termination=false"
+    cap_add:
+      - MKNOD
+    restart: "no"

@@ -9,6 +9,12 @@ import { z } from 'zod'
 import { amendmentSchema, documentHashSchema } from './document.ts'
 import { DocumentStore } from './store.ts'
 
+declare module '@deepseek-ai/cordis' {
+  interface Context {
+    legalDocuments: DocumentStore
+  }
+}
+
 /** Cordis entry name. */
 export const name = 'deepseek-legal-redlining'
 /** Standard services; no agent-loop replacement or independent application launcher. */
@@ -41,6 +47,7 @@ const output = {
 export function apply(ctx: Context, config: unknown): void {
   const resolved = configSchema.parse(config)
   const store = new DocumentStore(resolved.storageDirectory, resolved, resolved.author)
+  ctx.effect(() => ctx.provide('legalDocuments', store))
   const lifetime = new AbortController()
   const pending = new Set<Promise<string>>()
   const run = (signal: AbortSignal, operation: (signal: AbortSignal) => Promise<string>): Promise<string> => {

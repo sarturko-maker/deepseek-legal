@@ -26,6 +26,25 @@ export interface DocumentView {
   projection: string
 }
 
+/** Complete committed bytes and their current projection. */
+export interface DocumentSnapshot {
+  view: DocumentView
+  bytes: Buffer
+}
+
+/** Editor operations valid only inside a held document writer lock. */
+export interface DocumentEditor {
+  /** Read committed bytes without releasing editor ownership. @returns The complete current document. */
+  read(): Promise<DocumentSnapshot>
+  /** Save a complete DOCX against its last read identity.
+   * @param expected Current identity from the editor's previous read or save.
+   * @param bytes Complete edited DOCX bytes.
+   * @param signal Request cancellation, checked before publication.
+   * @returns The committed projection; identical bytes retain the generation.
+   */
+  save(expected: DocumentHash, bytes: Uint8Array, signal: AbortSignal): Promise<DocumentView>
+}
+
 /** Private managed files only; this class never writes to the source workspace. */
 export class DocumentStore {
   readonly root: string
@@ -127,6 +146,61 @@ export class DocumentStore {
     const head = await this.readHead(directory)
     if (head === undefined) throw new Error('Open a contract with contract_open first.')
     return this.view(directory, head)
+  }
+
+  /** Hold the existing cross-process writer lock throughout one editor lifetime.
+   * @param session Owning Harness Session with an already opened contract.
+   * @param signal Editor lifetime cancellation.
+   * @param operation Consumer owning the editor lifetime and awaiting its requests.
+   * @returns The consumer result after pending operations settle and ownership releases.
+   */
+  async withEditor<T>(session: SessionId, signal: AbortSignal,
+    operation: (editor: DocumentEditor) => Promise<T>): Promise<T> {
+    const directory = this.directory(session)
+    return withFileLock(join(directory, 'head.json'), async () => {
+      signal.throwIfAborted()
+      if (await this.readHead(directory) === undefined) throw new Error('Open a contract with contract_open first.')
+      const lifetime = new AbortController()
+      const active = AbortSignal.any([signal, lifetime.signal])
+      let tail: Promise<void> = Promise.resolve()
+      const run = <R>(work: () => Promise<R>): Promise<R> => {
+        const result = tail.then(() => { active.throwIfAborted(); return work() })
+        tail = result.then(() => {}, (_error: unknown) => {
+          // The caller receives failures; later requests must still be admitted.
+        })
+        return result
+      }
+      const editor: DocumentEditor = {
+        read: () => run(async () => {
+          const head = await this.readHead(directory)
+          if (head === undefined) throw new Error('The managed contract head is missing.')
+          return { view: await this.view(directory, head), bytes: await this.blob(directory, head.currentHash) }
+        }),
+        save: (expected, bytes, requestSignal) => run(async () => {
+          const saveSignal = AbortSignal.any([active, requestSignal])
+          saveSignal.throwIfAborted()
+          const head = await this.readHead(directory)
+          if (head === undefined) throw new Error('The managed contract head is missing.')
+          if (head.currentHash !== expected) throw new Error('The contract has changed. Reload before saving.')
+          await this.blob(directory, head.originalHash)
+          const projection = await projectDocument(bytes, this.limits)
+          const hash = documentHash(bytes)
+          const next: Head = { ...head, currentHash: hash,
+            generation: head.generation + (hash === head.currentHash ? 0 : 1) }
+          const view = this.checkView({ ...next, projection })
+          saveSignal.throwIfAborted()
+          await this.publishBlob(directory, bytes)
+          saveSignal.throwIfAborted()
+          await this.publishHead(directory, next)
+          return view
+        }),
+      }
+      try { return await operation(editor) }
+      finally {
+        lifetime.abort()
+        await tail
+      }
+    }, { waitMs: 0 })
   }
 
   /** Publish a complete tracked batch only against the expected current hash.

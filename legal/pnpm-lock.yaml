@@ -39,12 +39,18 @@ importers:
       '@deepseek-ai/dsh-atomic-write':
         specifier: link:../packages/util/atomic-write
         version: link:../packages/util/atomic-write
+      '@deepseek-ai/dsh-brand':
+        specifier: link:../packages/util/brand
+        version: link:../packages/util/brand
       '@deepseek-ai/dsh-fs':
         specifier: link:../packages/fs/fs
         version: link:../packages/fs/fs
       '@deepseek-ai/dsh-fs-local':
         specifier: link:../packages/fs/fs-local
         version: link:../packages/fs/fs-local
+      '@deepseek-ai/dsh-host-webserver':
+        specifier: link:../packages/host/webserver
+        version: link:../packages/host/webserver
       '@deepseek-ai/dsh-llm':
         specifier: link:../packages/llm/llm
         version: link:../packages/llm/llm
