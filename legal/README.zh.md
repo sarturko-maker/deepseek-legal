@@ -34,6 +34,16 @@ corepack pnpm --dir legal test
 
 本包拥有独立的锁文件。`pnpm pack` 创建包含构建后的 ESM 插件、bundle 补丁和 README 的 tarball；可安装产物保留精确的 Harness peer 版本要求。生成的 `dist`、依赖、覆盖率文件和 tarball 均被忽略。现有的构建后 `dsh --profile headless --patch legal/cordis.patch.yml --dump-config` 路径已在隔离的测试 home 中接受此覆盖配置；这只能证明组合配置有效，不能证明真实模型调用或 Desktop 安装有效。
 
+真实编辑器测试需要运行中的 Docker Linux 引擎，并先通过 `docker compose -f legal/editor/compose.yml pull` 拉取固定镜像。必须显式启用此测试；当 Docker 可执行文件不在 `PATH` 中时，`LEGAL_DOCKER_BIN` 指定它的位置。以下路径对应本机的按用户安装的 Docker。
+
+```powershell
+$env:LEGAL_EDITOR_E2E = '1'
+$env:LEGAL_DOCKER_BIN = Join-Path $env:LOCALAPPDATA 'Programs\DockerDesktop\resources\bin\docker.exe'
+corepack pnpm --dir legal run test:e2e
+```
+
+此测试创建并删除自己的 Compose 项目，使用分配的回环端口，并仅发送合成 DOCX 数据。它检查两次 CODE 编辑和 WOPI 保存、其间的一次 ADEU 修改、原始字节保留和指定文档特性。它独立于不需要密钥的单元测试，不能证明 Desktop 嵌入或自动聊天交接有效。
+
 <a id="document-tools"></a>
 ## 文档工具
 
@@ -52,7 +62,7 @@ corepack pnpm --dir legal test
 
 访问凭证标识一个文档生命周期，在配置的时长后过期，并且不携带工作区文件系统路径。Bearer 令牌仅供经过身份验证的编辑器调用方使用；不要记录启动数据或 WOPI 请求 URL。默认允许四个活动文档、每个文档八个待处理请求，访问凭证有效期为一小时。WOPI 锁在 30 分钟后过期，除非客户端刷新它。锁不匹配时返回 409 和当前锁；过期、重复或错误的访问令牌会被拒绝。上传使用配置的文档字节上限。向编辑器提供的审阅者名称默认为 `Human Reviewer`，与 agent 名称不同；父来源仅允许原生 Desktop 的 `dsh-app://app`。
 
-[容器配置](editor/compose.yml)固定已发现的 CODE 镜像，仅发布回环端口 9980，并允许回调到 `host.docker.internal` 上的 Host 端口 19387。`LEGAL_EDITOR_PORT` 和 `LEGAL_HOST_PORT` 可以覆盖这些部署端口。Docker Desktop 的 Linux 容器引擎和 WSL2 是先决条件；Harness 仍然以原生 Windows 应用运行。真实 CODE 启动、回调访问、编辑器保存和 Desktop 嵌入尚未验证。
+[容器配置](editor/compose.yml)固定已发现的 CODE 镜像，仅发布回环端口 9980，并允许回调到 `host.docker.internal` 上的 Host 端口 19387。`LEGAL_EDITOR_PORT` 和 `LEGAL_HOST_PORT` 可以覆盖这些部署端口。Docker Desktop 的 Linux 容器引擎和 WSL2 是先决条件；Harness 仍然以原生 Windows 应用运行。真实 CODE 启动、Windows 回调和编辑器保存已通过合成文档往返测试；Desktop 嵌入尚未验证。
 
 <a id="packaging-and-upstream-updates"></a>
 ## 打包与上游更新
@@ -76,11 +86,11 @@ Harness 更新必须有意进行：选择上游发布版本，同时更新开发
 
 - 此阶段没有交互式编辑器、导出操作、审阅结果记录、Commercial Agent 预设、playbook、自动轮次接纳或已记录 Session 场景。这些属于[实施计划](../IMPLEMENTATION_PLAN.md)的后续阶段。
 - 存储归 Session 所有；无法从多个 Session 协调编辑。
-- ADEU 的投影不涵盖所有 Word 构造。专门的 fixture（测试前置数据）检查人工批注、粗体文本、页眉和不解析的图像字节；它不能证明任意合同或真实 Collabora 保存的保真性。
+- ADEU 的投影不涵盖所有 Word 构造。合成 CODE 往返测试检查已有批注和 agent 批注、修订、粗体文本、页眉及嵌入 PNG 的精确字节；它不能证明任意合同的保真性或接受和拒绝修订的行为。
 - Desktop 安装和真实模型对这些新工具的使用尚未验证。源代码组合、两个构建后的入口和可选编辑器的真实 Host HTTP 路由分别进行测试。
 - 没有独立的运行时不变量伴随入口，因为一个文档存储拥有 head 及其按内容寻址的文件。读取时会检查完整性。
 
 <a id="dev-note"></a>
 ## 开发备注
 
-固定的编辑器先决条件仍然是在专用本地容器中运行 Collabora CODE 26.04.1.4。10 月 8 日已安装 Docker 客户端 29.8.2 和 WSL 3.0.1。由于固件虚拟化已禁用，Docker 无法启动；还需确认 Windows 的虚拟机平台已启用。真实容器验证等待用户完成设置。Harness 仍然以原生 Windows 应用运行；编辑器的容器后端独立运行。
+真实编辑器测试验证了 Collabora CODE 26.04.1.4。Windows 引擎报告 Docker 29.8.2。containerd 启动崩溃后，用户释放磁盘空间，正常重启 Docker 恢复了引擎；崩溃原因尚未确认。合成文档往返测试通过；完整的原生 Desktop 验收仍在[实施计划](../IMPLEMENTATION_PLAN.md)中列为待完成。

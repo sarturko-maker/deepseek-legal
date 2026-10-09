@@ -18,6 +18,7 @@
   "scripts": {
     "build": "tsc --noEmit && tsdown",
     "test": "vitest run",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": { "@adeu/core": "3.0.6", "fflate": "0.8.3", "zod": "4.4.3" },
@@ -51,9 +52,12 @@
     "@deepseek-ai/dsh-tools": "link:../packages/core/tools",
     "@deepseek-ai/dsh-fs": "link:../packages/fs/fs",
     "@types/node": "^24.0.0",
+    "@types/ws": "8.18.1",
+    "@xmldom/xmldom": "0.9.12",
     "tsdown": "^0.21.0",
     "typescript": "^6.0.2",
     "vitest": "^4.1.0",
-    "vite-tsconfig-paths": "^6.0.0"
+    "vite-tsconfig-paths": "^6.0.0",
+    "ws": "8.21.0"
   }
 }

@@ -15,14 +15,14 @@
   en: c2dcfa8c69bf03f4
   zh: 28fb6adb61418577
 /deepseek-legal-redlining-bundle/build-and-check:
-  en: bedd108f382f27a6
-  zh: 923cd6f08e192370
+  en: 1f7062f1b4535f13
+  zh: 0b808327f682073a
 /deepseek-legal-redlining-bundle/document-tools:
   en: 706f918106d8a4b7
   zh: 93f6394be455cd07
 /deepseek-legal-redlining-bundle/local-editor-adapter:
-  en: 02087754f4bb095c
-  zh: 63f08570e3e7c5c0
+  en: 2761bdc7a4c99d69
+  zh: 4de0e92cb6fd8187
 /deepseek-legal-redlining-bundle/packaging-and-upstream-updates:
   en: 11fff1187b27f0ca
   zh: 727c0ada9335ae52
@@ -33,8 +33,8 @@
   en: 4de3af8330046492
   zh: 18e206d857d41dd0
 /deepseek-legal-redlining-bundle/known-limitations-and-deferred-work:
-  en: d87e055f8fa696cf
-  zh: cc5127df4d434ca5
+  en: c3a396369e390e0c
+  zh: d217faa0406e9f8b
 /deepseek-legal-redlining-bundle/dev-note:
-  en: ce4662fdcbe82028
-  zh: 006a69702208ccae
+  en: bc73b7c25ecc5b56
+  zh: 19e914605b1592c9
