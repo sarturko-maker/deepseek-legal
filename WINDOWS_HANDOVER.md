@@ -2,7 +2,7 @@
 
 Prepared 6 October 2026. This is a continuation guide for the user and the next Codex session. [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) is the single current plan and records architecture, acceptance requirements and progress.
 
-Continuation is authorized. Phase 1 native launch, repository selection, existing DOCX preview and live-model chat passed on `feat/windows-desktop-baseline`. The independent [legal bundle](legal/README.md) now implements and tests the tracked document engine and guarded storage. Read the [staged implementation](IMPLEMENTATION_PLAN.md#staged-implementation) before continuing. Upstream application source remains at the pinned baseline; the local editor and Desktop integration are next.
+Continuation is authorized. Phase 1 native launch, repository selection, existing DOCX preview and live-model chat passed on `feat/windows-desktop-baseline`. The independent [legal bundle](legal/README.md) implements the tracked document engine, guarded storage and optional WOPI Host adapter; real ADEU–Collabora edit/save round trips pass. These checkpoints are pushed to [feat/legal-redlining](https://github.com/sarturko-maker/deepseek-legal/tree/feat/legal-redlining), with the remote branch verified on 9 October. Read the [remaining stages](IMPLEMENTATION_PLAN.md#next-stages) before continuing. Upstream application source remains at the pinned baseline; authenticated launch and the native Desktop pane are next.
 
 **Start directly in native Windows Harness Desktop.** The user has moved this project to their personal Windows PC. The earlier Web-first route and proposed Linux Desktop adaptation are superseded. Use the supported Windows application and its normal upstream development commands. Do not implement Linux targets, patch the Desktop launcher for Linux, set up Wine/Xvfb, or require a Web prototype before Desktop work.
 
@@ -21,15 +21,15 @@ The user authorized the handoff push to `https://github.com/sarturko-maker/deeps
 Clone using native Windows Git in a Windows directory, then open the resulting `deepseek-legal` folder as the Codex project:
 
 ```powershell
-git clone --branch main https://github.com/sarturko-maker/deepseek-legal.git
+git clone --branch feat/legal-redlining https://github.com/sarturko-maker/deepseek-legal.git
 cd deepseek-legal
 ```
 
-For an existing checkout, inspect its branch and local modifications before pulling; do not reset user work. This fork uses `main`; official Harness uses `master`. `origin` must remain the user-designated repository. Add the official Harness URL as a separate `upstream` remote if useful; do not push to it or silently update the pinned baseline.
+For an existing checkout, inspect its branch and local modifications before pulling; do not reset user work. Current integration work is on `feat/legal-redlining`; the fork's base branch is `main`, and official Harness uses `master`. `origin` must remain the user-designated repository. Add the official Harness URL as a separate `upstream` remote if useful; do not push to it or silently update the pinned baseline.
 
 Suggested first instruction to the new Codex session:
 
-> Read AGENTS.md, WINDOWS_HANDOVER.md and IMPLEMENTATION_PLAN.md. Continue with implementation on this personal Windows PC. Start by verifying unmodified Harness Desktop through its normal Windows launch path, then implement and test the plan incrementally. Do not add Linux support or a required Web-first phase. Keep the implementation plan current and prove the complete human–agent editing loop in Desktop.
+> Read AGENTS.md, WINDOWS_HANDOVER.md and IMPLEMENTATION_PLAN.md. Continue on this personal Windows PC from the published legal checkpoint. Propose the exact stage-2A file plan, verify authenticated Remote contribution and Desktop Client loading, then implement the native editor pane and test it through the normal Desktop launch path. Do not repeat the completed baseline or add Linux support or a required Web-first phase. Keep the single plan current and prove the complete human–agent editing loop incrementally.
 
 ## First actions for the continuing agent
 
@@ -74,7 +74,7 @@ The [staged implementation](IMPLEMENTATION_PLAN.md#staged-implementation) define
 
 Collabora uses the dedicated [container configuration](legal/editor/compose.yml). The 9 October real editor test verifies CODE 26.04.1.4, Windows host callbacks and two edit/save rounds with an intervening ADEU amendment. Docker reports a running Linux engine at 29.8.2; Windows reports the hypervisor present. After a containerd metadata `SIGBUS`, the user freed disk space; a host CIM check then showed approximately 13.6 GB available. A normal Docker restart restored the engine, and the failed test's isolated Compose project was removed. The crash's cause is unconfirmed. No Docker purge, factory reset, machine-wide feature change or reboot was performed. WSL for the container backend does not move Harness into WSL. The old laptop's LQ container is not a dependency. Preserve branding/notices and check applicable terms before redistribution; do not bundle an editor image in Git.
 
-Run the opt-in editor test using [the bundle's instructions](legal/README.md#build-and-check). It checks a synthetic document, not the Desktop UI or live-model handover. The next implementation item is the authenticated editor launch and native Desktop pane, with an exact file plan before edits; accept/reject, automatic capture before chat and complete Desktop acceptance remain pending.
+Run the opt-in editor test using [the bundle's instructions](legal/README.md#build-and-check). It checks a synthetic document, not the Desktop UI or live-model handover. The [exact next work item](IMPLEMENTATION_PLAN.md#next-editor-item) identifies authenticated launch, native pane files and acceptance checks. Subsequent items cover automatic capture before chat, review continuity, the Commercial Agent and full native acceptance. [Later packaging](IMPLEMENTATION_PLAN.md#later-windows-packaging) plans startup management and a Windows installer after the MVP; neither is implemented. The current continuation request publishes and plans this work without beginning a feature increment.
 
 Verify the editor's embedding origin, postMessage checks, HTTP/WebSocket access and WOPI callbacks against actual `dsh-app://app` Desktop behaviour. Never disable Electron sandboxing, context isolation or web security to make the iframe work. Normal Windows support should remain untouched unless an observed upstream defect requires a separately justified fix.
 
