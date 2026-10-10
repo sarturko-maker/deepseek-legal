@@ -1,0 +1,47 @@
+ONE-WAY NON-DISCLOSURE AGREEMENT
+
+Fictional software test document. Not for signature.
+
+Date: 10 October 2026
+
+PARTIES
+
+Aster Demo Limited and Birch Demo Limited are fictional parties to this agreement. Aster Demo Limited is the Discloser and Birch Demo Limited is the Recipient.
+
+1. Purpose
+
+The parties wish to evaluate a proposed software integration project (the Purpose).
+
+2. Confidential Information
+
+Confidential Information means non-public business, technical or financial information disclosed by the Discloser to the Recipient for the Purpose, in any form, that is marked confidential or would reasonably be understood to be confidential. Only information disclosed by Aster Demo Limited is protected under this agreement.
+
+3. Recipient obligations
+
+The Recipient must keep Confidential Information confidential, use it only for the Purpose and protect it with at least reasonable care. The Recipient may share Confidential Information with its employees and professional advisers who need it for the Purpose and are bound by confidentiality obligations. The Recipient must not disclose Confidential Information to anyone else without the Discloser's prior written consent.
+
+4. Exceptions and required disclosure
+
+The obligations do not apply to information that the Recipient can demonstrate is public without breach of this agreement, was already lawfully known to it, is independently developed without using Confidential Information, or is lawfully received from another source without a duty of confidence. The Recipient may disclose information required by law or a court order, after notifying the Discloser where legally permitted and limiting disclosure to what is required.
+
+5. Duration
+
+This agreement begins on the date above and permits disclosures for one year. The Recipient's confidentiality and restricted-use obligations continue for three years after each disclosure.
+
+6. Return and deletion
+
+On the Discloser's written request, the Recipient must return or delete Confidential Information within twenty business days. The Recipient may retain information required by law and copies in routine backups that cannot reasonably be separately deleted, provided those copies remain protected under this agreement and are not used for another purpose.
+
+7. No licence or obligation
+
+No licence or transfer of intellectual property rights is granted by this agreement. Neither party is required to proceed with a transaction.
+
+8. Governing law and courts
+
+This agreement is governed by the laws of England and Wales. The courts of England and Wales have exclusive jurisdiction over disputes arising from this agreement.
+
+SIGNATURES
+
+For Aster Demo Limited: ____________________    Date: __________
+
+For Birch Demo Limited: ____________________    Date: __________

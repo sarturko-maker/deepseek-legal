@@ -1,0 +1,90 @@
+NDA REDLINING TEST — STAGE 2A
+
+Purpose: use a fictional one-way NDA to test agent redlines, visible Word revisions, manual editing, comments and persistence in native Harness Desktop. This is a hands-on test; its results have not been recorded yet.
+
+Files are in C:\Users\tishi\deepseek-lq\legal\manual-tests\nda-stage-2a.
+one-way-nda.txt is the readable source. one-way-nda.docx is the clean baseline. Keep both files unchanged; the plugin manages a separate working copy for each Session.
+
+CURRENT STAGE
+
+At stage 2A, save and close the Contract editor before sending any amendment request. After the agent finishes, reopen the same source DOCX through Open for redlining to see the managed working copy and its redlines. The ordinary file preview shows the baseline source. Automatic save-before-chat and automatic editor reload are stage 3A.
+
+Use one fresh Session for the entire test. Each Session owns one managed contract. A new Session is also how you restart from the clean baseline. Keep this test under an hour and save before quitting; expired grants do not recover unsaved drafts at this stage.
+
+SETUP
+
+1. Ensure Docker's dedicated Collabora instance and native Desktop are running. Startup instructions are in IMPLEMENTATION_PLAN.md under Stage 2A checkpoint.
+2. Create a NEW Session with C:\Users\tishi\deepseek-lq as its workspace. Do not reuse the earlier sample-contract Session.
+3. Keep the Contract editor closed for the first prompt. You can view the source in the normal preview without opening the editor.
+
+AGENT TURN 1 — MAKE THE NDA MUTUAL
+
+Paste this into chat:
+
+Open legal/manual-tests/nda-stage-2a/one-way-nda.docx using the contract tools. Review this fictional NDA neutrally for both parties. Make it mutual: either party may disclose Confidential Information, and the other party owes the same confidentiality and restricted-use obligations when receiving it. Update the title, party-role definitions and any one-way wording consistently. Keep the one-year disclosure period, three-year confidentiality period, twenty-business-day return/deletion deadline, clause 7 and the England and Wales governing-law/courts clause unchanged. Apply actual Word tracked changes to the managed working document using contract_redline, using the latest current hash. Preserve the original file and leave revisions outstanding. Do not replace the document with a rewritten file or only describe suggested wording in chat. Tell me when the redline is applied.
+
+4. Wait for the agent's amendment tool to finish successfully. If a permission prompt appears, approve access to this synthetic document through the normal controls.
+5. In Workspace files, click legal > manual-tests > nda-stage-2a > one-way-nda.docx. Click Open for redlining. Dismiss the normal Collabora welcome dialog if needed; use the sidebar fullscreen control for more space.
+6. Inspect the title, parties and clause 2. Use the editor's Review/Tracking controls to show revisions if they are hidden. Look for inserted/deleted text and revision details; a chat explanation alone does not pass.
+
+Expected: both parties can disclose and receive; both owe reciprocal duties. The title/role definitions and one-way wording have visible tracked changes. Clause 5 still says three years, clause 6 still says twenty business days, and clause 8 still says England and Wales.
+
+7. Choose Save, wait for Saved, then Save and close. Keep the existing revisions outstanding.
+
+AGENT TURN 2 — CHANGE TWO COMMERCIAL TERMS
+
+Paste this into the SAME Session:
+
+Read the continuing managed NDA with contract_read; do not reopen the source as a new document. Keep it mutual. Change the confidentiality and restricted-use period in clause 5 from three years after each disclosure to two years after each disclosure. Change the return/deletion deadline in clause 6 from twenty business days to ten business days. Leave the one-year disclosure period, clause 7, governing law, courts and all other wording unchanged. Apply these changes with contract_redline and the latest current hash, without accepting or rejecting existing revisions. Preserve the original file.
+
+8. Wait for a successful amendment, then reopen the same DOCX through Open for redlining.
+
+Expected: the mutual changes remain, with further tracked changes for two years and ten business days. Clause 8 remains England and Wales.
+
+HUMAN EDIT — SCOTTISH LAW AND COURTS
+
+9. In the editor, find clause 8. Enable recording of your edits using the Review/Tracking controls. Replace the clause's two sentences with:
+
+This agreement is governed by the laws of Scotland. The courts of Scotland have exclusive jurisdiction over disputes arising from this agreement.
+
+10. Attach a comment to clause 8 containing this exact marker:
+
+NDA TEST: Keep Scottish law and courts in later amendments.
+
+Post/submit the comment in the editor before continuing; do not leave it as an unfinished comment draft.
+
+11. Choose Save, wait for Saved, then Save and close. Reopen the same DOCX in the same Session and confirm the Scottish wording and your comment remain. Save and close again before the next chat prompt.
+
+AGENT TURN 3 — PRESERVE YOUR WORK WHILE AMENDING ANOTHER CLAUSE
+
+Paste this into the SAME Session:
+
+Read the latest continuing managed NDA with contract_read, including its comments and revisions. First tell me which governing law and courts are currently specified. I manually changed clause 8 to Scotland and added a comment beginning "NDA TEST:"; preserve that exact wording and comment. In clause 7 only, add this sentence after "Neither party is required to proceed with a transaction.": "Each party will bear its own costs of the evaluation." Use contract_redline and the latest current hash. Keep the NDA mutual, retain the two-year confidentiality period and ten-business-day return/deletion deadline, and leave all existing revisions outstanding. Do not alter clause 8 or rewrite the source file.
+
+12. Wait for a successful amendment, then reopen the same DOCX through Open for redlining.
+
+Expected: the new costs sentence appears as a tracked insertion. Scottish law and courts, your NDA TEST comment, the mutual duties, two-year period and ten-business-day deadline remain. Existing revisions remain reviewable. If the agent reads old wording, stop and record its tool result; do not fix the source file to mask the failure.
+
+FINAL SAVE AND REOPEN
+
+13. Add and post another short comment: "NDA TEST: final reopen check". Use the tab's close control. Reopen the same document and confirm that comment saved and the document still has all expected changes.
+14. Finish with Save and close. Optional: return to the ordinary source preview to confirm the baseline still says ONE-WAY, three years, twenty business days and England and Wales.
+
+Baseline DOCX SHA-256: e716270db26bff6d366630801ef0b54b98f8b18cb423c2c0216d976af39c6c5c
+You can independently check the source in PowerShell:
+Get-FileHash -Algorithm SHA256 -LiteralPath 'C:\Users\tishi\deepseek-lq\legal\manual-tests\nda-stage-2a\one-way-nda.docx'
+The hash must still equal the baseline value above. This checks the source, not the managed working copy.
+
+RECORD YOUR RESULTS
+
+Turn 1 applied tracked mutual changes: PASS / FAIL
+Turn 2 retained mutuality and changed both deadlines: PASS / FAIL
+Manual Scottish wording/comment survived save and reopen: PASS / FAIL
+Turn 3 read Scotland and preserved human work: PASS / FAIL
+Turn 3 added the costs sentence as a tracked change: PASS / FAIL
+Tab close saved the final comment: PASS / FAIL
+Original DOCX hash unchanged: PASS / FAIL
+Unexpected text/formatting changes: ____________________
+Failed step, visible message and agent tool result: ____________________
+
+Pause after this test and report these results. Automatic handover, acceptance/rejection continuity and managed export have their own later-stage checkpoints.
