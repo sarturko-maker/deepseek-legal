@@ -8,6 +8,8 @@ import { isAbsolute } from 'node:path'
 import { z } from 'zod'
 import { amendmentSchema, documentHashSchema } from './document.ts'
 import { DocumentStore } from './store.ts'
+import { openDocument } from './open.ts'
+import * as editor from './editor/index.ts'
 
 declare module '@deepseek-ai/cordis' {
   interface Context {
@@ -28,6 +30,7 @@ const configSchema = z.strictObject({
   maxParts: z.number().int().positive().default(2000),
   maxProjectionBytes: z.number().int().positive().default(256 * 1024),
   maxAmendments: z.number().int().positive().default(40),
+  editor: editor.editorConfigSchema.optional(),
 })
 
 function sessionId(exec: ToolExecution): SessionId {
@@ -48,6 +51,7 @@ export function apply(ctx: Context, config: unknown): void {
   const resolved = configSchema.parse(config)
   const store = new DocumentStore(resolved.storageDirectory, resolved, resolved.author)
   ctx.effect(() => ctx.provide('legalDocuments', store))
+  if (resolved.editor !== undefined) ctx.plugin(editor, resolved.editor)
   const lifetime = new AbortController()
   const pending = new Set<Promise<string>>()
   const run = (signal: AbortSignal, operation: (signal: AbortSignal) => Promise<string>): Promise<string> => {
@@ -64,17 +68,14 @@ export function apply(ctx: Context, config: unknown): void {
   })
   ctx.effect(() => ctx.tools.register(defineTool({
     name: 'contract_open',
-    description: 'Open one DOCX contract in this Session. Preserve its original and create a continuing working copy. Returns current text, tracked revisions and comments. The editor is not available in this stage.',
+    description: 'Open one DOCX contract in this Session. Preserve its original and create a continuing working copy. Returns current text, tracked revisions and comments. Save and close an open editor before asking for amendments.',
     parameters: { path: { type: 'string', required: true, description: 'The DOCX source path. Ask the user which contract and reviewing party to use when unspecified.' } },
     output,
     execute(args, exec) { return run(exec.signal, async signal => {
       const id = sessionId(exec)
       const cwd = exec.agent?.session.header.cwd
       if (cwd === undefined) throw new Error('Select a workspace before opening a contract.')
-      if (!args.path.toLowerCase().endsWith('.docx')) throw new Error('Only DOCX contracts are supported.')
-      const target = await ctx.fs.resolve(args.path, { cwd, signal })
-      const bytes = await ctx.fs.readBytes(target, signal, resolved.maxFileBytes)
-      return JSON.stringify(await store.start(id, target.displayPath, bytes, signal))
+      return JSON.stringify(await openDocument(ctx, store, id, cwd, args.path, signal))
     }) },
     presentCall: () => ({ card: 'generic', title: 'Open contract' }),
   })))

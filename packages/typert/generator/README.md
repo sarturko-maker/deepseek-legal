@@ -49,6 +49,8 @@ Static consumers call `WorkspaceAnalyzer` directly against the workspace's `tsco
 
 ### Running generation inside a tsdown build
 
+Independent plugins can explicitly extend `packageDirectories` (default `['packages']`) and select `hostConfig` / `clientConfig` on `WorkspaceTypertGenerator` or `WorkspaceAnalyzer`. The selected compiler aggregates must include those plugins and the protocol's lookup declarations. Package directories affect registration discovery and its cache identity; they do not enroll plugins in the repository's default build.
+
 The package's `./tsdown` subpath provides `typertPlugin()` for the root tsdown config: it lowers standard decorators in TypeScript dependencies before bundling and emits the model-driven face artifacts at the package output root. In `package` mode it emits only the bundled package; in `workspace` mode it emits every explicit contributor once.
 
 -----

@@ -55,6 +55,19 @@ afterEach(() => {
 })
 
 describe('Remote model generation', { timeout: 60_000 }, () => {
+  it('discovers an external package only when its directory is explicitly included', () => {
+    const root = copyFixture()
+    cpSync(join(root, 'packages/remote'), join(root, 'addons/remote'), { recursive: true })
+    editFile(root, 'tsconfig.host.json', source => source.replace('./packages/remote', './addons/remote'))
+    editFile(root, 'tsconfig.base.json', source => source.replaceAll('./packages/remote', './addons/remote'))
+    expect(new WorkspaceTypertGenerator(root).discover(['host']).map(item => item.package)).not.toContain('@fixture/remote')
+    const generator = new WorkspaceTypertGenerator(root, { packageDirectories: ['packages', 'addons'] })
+    expect(generator.discover(['host']).map(item => item.package)).toContain('@fixture/remote')
+    const [artifact] = generator.generate(['@fixture/remote'], ['host'])
+    expect(artifact?.packageRoot).toBe('addons/remote')
+    expect(artifact?.remote?.js).toContain("package: '@fixture/remote'")
+  })
+
   it('projects a generic binary result without copying or freezing its bytes', async () => {
     const root = copyFixture()
     editFile(root, 'packages/remote/src/types.ts', source => `${source}\nexport type BinaryFile<Data extends Uint8Array = Uint8Array> = {\n  readonly data: Data\n} & { readonly size: number }\n`)

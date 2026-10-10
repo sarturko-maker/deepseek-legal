@@ -7,6 +7,8 @@ services:
     environment:
       aliasgroup1: "http://host.docker.internal:${LEGAL_HOST_PORT:-19387}"
       extra_params: "--o:ssl.enable=false --o:ssl.termination=false"
+    command:
+      - "--o:net.content_security_policy=frame-ancestors dsh-app://app;"
     cap_add:
       - MKNOD
     restart: "no"

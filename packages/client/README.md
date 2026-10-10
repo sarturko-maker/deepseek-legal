@@ -93,6 +93,8 @@ The kernel packages boot and serve the page; the UI feature packages present it.
 <a id="related-documentation"></a>
 ## Related documentation
 
+The shared `tsdown.client.ts` build preset accepts an explicit `manifest` path for independent plugins outside the root workspace. It validates the package name and uses that manifest's dependency and external-module declarations; ordinary callers retain workspace discovery. The emitted factory still resolves shared browser services through the existing module loader.
+
 Start with the subsystem reference and the two notes that own the cross-package composition decisions, then the host half that serves this page.
 
 - [Client modules subsystem](../../docs/subsystems/client-modules.md) — the web plugin table: `dsh.client` declarations, the boot graph wire, and the bundle route.

@@ -1,7 +1,8 @@
 import { defineConfig } from 'tsdown'
 
 export default defineConfig({
-  entry: ['src/index.ts', 'src/editor/index.ts'],
+  entry: { index: 'lib/types/index.js', 'editor/index': 'lib/types/editor/index.js',
+    'editor/types': 'lib/types/editor/types.js' },
   platform: 'node',
   format: ['esm'],
   target: 'es2024',

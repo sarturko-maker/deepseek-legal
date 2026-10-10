@@ -179,8 +179,8 @@ export interface SidebarRightOpenTabOptions<K extends string = string> extends S
 /** The scheme every resource address carries; anything else is not a resource this face opens. */
 const RESOURCE_SCHEME = 'dsh-resource://'
 
-/** Synchronous close/replacement hook; resource owners retain any background cleanup. */
-export type SidebarRightCloseHandler = (sessionId: SessionId, tab: TabRecord) => void
+/** Synchronous close hook; false retains the tab while its owner finishes asynchronous cleanup. */
+export type SidebarRightCloseHandler = (sessionId: SessionId, tab: TabRecord) => void | false
 
 /** The outward right-Sidebar face (`ctx.sidebarRight`). */
 export interface ISidebarRight {
@@ -271,7 +271,7 @@ export class SidebarRightController implements ISidebarRight {
   /**
    * Register resource cleanup before explicit removal. Failure preserves the tab.
    * @param kind - tab kind owned by the registering plugin.
-   * @param handler - saves any background cleanup before returning and allowing removal.
+   * @param handler - returns false to defer removal; the owner calls close again after cleanup.
    * @returns an effect-scoped unregister callback.
    */
   registerCloseHandler(kind: string, handler: SidebarRightCloseHandler): () => void {
@@ -377,7 +377,7 @@ export class SidebarRightController implements ISidebarRight {
   }
 
   private removeAfterCleanup(sessionId: SessionId, tab: TabRecord, commit: () => void): void {
-    this.closeHandlers.get(tab.kind)?.(sessionId, tab)
+    if (this.closeHandlers.get(tab.kind)?.(sessionId, tab) === false) return
     commit()
   }
 

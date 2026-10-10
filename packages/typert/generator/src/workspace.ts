@@ -18,6 +18,12 @@ export interface WorkspaceEmitResult extends ModelEmitResult {
 
 /** Behavior switches for one {@link WorkspaceTypertGenerator}. */
 export interface WorkspaceTypertGeneratorOptions {
+  /** Host aggregate path relative to root; defaults to tsconfig.host.json. */
+  readonly hostConfig?: string
+  /** Client aggregate path relative to root; defaults to tsconfig.client.json. */
+  readonly clientConfig?: string
+  /** Package directories relative to root; defaults to packages. */
+  readonly packageDirectories?: readonly string[]
   /**
    * Run the per-package syntactic/semantic diagnostic pass before analysis
    * (default true). Pass false only when the same orchestration already
@@ -53,6 +59,7 @@ export class WorkspaceTypertGenerator {
     return new WorkspaceAnalyzer({
       root: this.root,
       caches: this.caches,
+      ...this.options,
       ...(faces === undefined ? {} : { faces }),
     }).discoverPackages()
   }
@@ -69,8 +76,8 @@ export class WorkspaceTypertGenerator {
       root: this.root,
       packages: selected,
       caches: this.caches,
+      ...this.options,
       ...(faces === undefined ? {} : { faces }),
-      ...(this.options.checkDiagnostics === undefined ? {} : { checkDiagnostics: this.options.checkDiagnostics }),
     }).analyze()
     const artifacts: WorkspaceEmitResult[] = []
     for (const face of workspace.faces) {

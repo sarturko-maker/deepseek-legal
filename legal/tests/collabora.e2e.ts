@@ -152,7 +152,8 @@ it.skipIf(process.env.LEGAL_EDITOR_E2E !== '1')('preserves ADEU revisions throug
     comment: 'Review the increased liability cap.' }], signal)
   ctx.provide('legalDocuments', store)
   await ctx.plugin(WebServer, { host: '127.0.0.1', port: 0 })
-  await ctx.plugin(EditorPlugin, { parentOrigin: 'dsh-app://app' })
+  await ctx.plugin(EditorPlugin, { parentOrigin: 'dsh-app://app', editorOrigin: 'http://127.0.0.1:9980',
+    callbackOrigin: 'http://host.docker.internal:19387' })
   const compose = fileURLToPath(new URL('../editor/compose.yml', import.meta.url))
   const project = `legal-code-test-${randomBytes(8).toString('hex')}`
   const env = { ...process.env, LEGAL_HOST_PORT: String(ctx.webServer.port), LEGAL_EDITOR_PORT: '0' }

@@ -1077,7 +1077,9 @@ describe('headless recorded-session snapshots', () => {
       ? [{ scenario, retainedToolInput: 'session.v3.jsonl' }] : [],
   ])
   for (const { scenario, retainedToolInput } of runs) {
-    const skipped = scenario.manifest.platform === 'posix' && process.platform === 'win32'
+    // The independent legal bundle needs its own installed dependencies and built artifacts.
+    const skipped = scenario.name === 'legal-editor-contract' && process.env.LEGAL_SNAPSHOT !== '1'
+      || scenario.manifest.platform === 'posix' && process.platform === 'win32'
       || scenario.manifest.platform === 'pwsh' && !hasPwsh
       || mode === 'record' && scenario.manifest.recording === 'authored'
       || mode === 'record' && scenario.manifest.sessionFormat !== undefined

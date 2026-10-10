@@ -25,7 +25,8 @@ async function fixture(maxFileBytes = 1024 * 1024, maxDocuments = 4, maxPendingR
   onTestFinished(() => ctx.fiber.dispose())
   ctx.provide('legalDocuments', store)
   await ctx.plugin(WebServer, { host: '127.0.0.1', port: 0 })
-  const plugin = await ctx.plugin(EditorPlugin, { parentOrigin: 'dsh-app://app', maxDocuments, maxPendingRequests })
+  const plugin = await ctx.plugin(EditorPlugin, { parentOrigin: 'dsh-app://app', maxDocuments, maxPendingRequests,
+    editorOrigin: 'http://127.0.0.1:9980', callbackOrigin: 'http://host.docker.internal:19387' })
   const host = ctx.legalEditor
   const grant = await host.open(session)
   const origin = `http://127.0.0.1:${ctx.webServer.port}`
@@ -83,6 +84,16 @@ it('revokes an expired capability and refuses its document requests', async () =
   expect(renewed.fileId).not.toBe(f.grant.fileId)
   expect(renewed.accessToken).not.toBe(f.grant.accessToken)
   expect((await fetch(f.url(renewed))).status).toBe(200)
+})
+
+it('refuses another Session closing an editor and retains its writer ownership', async () => {
+  const f = await fixture()
+  await expect(f.host.close(f.grant.fileId, SessionId('other-session'))).rejects.toThrow('Session')
+  expect((await fetch(f.url(f.grant))).status).toBe(200)
+  await expect(f.host.open(f.session)).rejects.toThrow()
+  await f.host.close(f.grant.fileId, f.session)
+  expect((await fetch(f.url(f.grant))).status).toBe(401)
+  await f.host.close(f.grant.fileId, f.session)
 })
 
 it('aborts an incomplete save and settles it before releasing editor ownership', async () => {

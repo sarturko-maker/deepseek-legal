@@ -104,7 +104,7 @@ function browserSourcePath(source: string, sourcemapPath: string): string {
  * @param libEntry - node-half entries, spelled at the call site so the
  * package-invariants gate can see `lib/types/invariant.js` in each package's
  * own tsdown.config.ts (a preset-side glob hides it from the mechanical check).
- * @param options - phase placement, lib overrides, companion Node configs, and optional per-file Client banner.
+ * @param options - phase placement, lib overrides, explicit external-package manifest, companion Node configs, and optional per-file Client banner.
  * @returns ENV-selected tsdown config for the current build face.
  */
 export function clientBundle(
@@ -112,11 +112,12 @@ export function clientBundle(
   libEntry: readonly string[],
   options: ClientBundleOptions = {},
 ): BuildFaceConfig {
-  const lib = clientLibraryConfig(id, libEntry, options.lib)
+  const manifestPath = options.manifest === undefined ? undefined : resolvePath(options.manifest)
+  const lib = clientLibraryConfig(id, libEntry, options.lib, manifestPath)
   return ({ env }) => {
     const face = buildFace(env?.DSH_BUILD_FACE)
     const clientEntry = face === undefined ? 'src/client/index.ts' : 'lib/types/client/index.js'
-    const client = clientConfig(id, clientEntry, options.clientBanner)
+    const client = clientConfig(id, clientEntry, options.clientBanner, manifestPath)
     const node = [lib, ...(options.companions ?? [])]
     if (face === 'host') return options.hostPhase === true ? node : [SKIP_WORKSPACE_BUILD]
     if (face === 'client') {
@@ -199,6 +200,8 @@ export function clientOnly(configs: readonly UserConfig[]): BuildFaceConfig {
 }
 
 interface ClientBundleOptions {
+  /** Explicit manifest for an independently built plugin outside the workspace package tree. */
+  readonly manifest?: string
   /** Emit the Node-side artifacts during the Host pass instead of the Client pass. */
   readonly hostPhase?: boolean
   /** Additional Node-side configs emitted alongside the package library. */
@@ -222,9 +225,10 @@ function clientLibraryConfig(
   id: string,
   libEntry: readonly string[],
   overrides: UserConfig = {},
+  manifestPath?: string,
 ): UserConfig {
   const isProductionDependency = (specifier: string): boolean =>
-    matchesSpecifier(productionExternals(id), specifier)
+    matchesSpecifier(productionExternals(id, manifestPath), specifier)
   return {
     name: id,
     entry: [...libEntry],
@@ -355,9 +359,16 @@ const clientExternalCache = new Map<string, ReadonlySet<string>>()
  * @returns the parsed manifest.
  * @throws {Error} when no workspace package declares that name.
  */
-function workspaceManifest(id: string): WorkspaceManifest {
-  const cached = manifestCache.get(id)
+function workspaceManifest(id: string, manifestPath?: string): WorkspaceManifest {
+  const key = `${id}\0${manifestPath ?? ''}`
+  const cached = manifestCache.get(key)
   if (cached !== undefined) return cached
+  if (manifestPath !== undefined) {
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as WorkspaceManifest
+    if (manifest.name !== id) throw new Error(`tsdown: ${manifestPath} must declare ${id}`)
+    manifestCache.set(key, manifest)
+    return manifest
+  }
   for (const manifestPath of globSync('packages/*/*/package.json', { cwd: REPOSITORY_ROOT })) {
     const manifest = JSON.parse(
       readFileSync(resolvePath(REPOSITORY_ROOT, manifestPath), 'utf8'),
@@ -375,17 +386,18 @@ function workspaceManifest(id: string): WorkspaceManifest {
  * @param id - package name, as spelled at the preset call site.
  * @returns one `^name(/|$)` pattern per production dependency, name-sorted.
  */
-function productionExternals(id: string): readonly RegExp[] {
-  const cached = productionExternalCache.get(id)
+function productionExternals(id: string, manifestPath?: string): readonly RegExp[] {
+  const key = `${id}\0${manifestPath ?? ''}`
+  const cached = productionExternalCache.get(key)
   if (cached !== undefined) return cached
-  const manifest = workspaceManifest(id)
+  const manifest = workspaceManifest(id, manifestPath)
   const names = new Set([
     ...Object.keys(manifest.dependencies ?? {}),
     ...Object.keys(manifest.peerDependencies ?? {}),
     ...Object.keys(manifest.optionalDependencies ?? {}),
   ])
   const patterns = [...names].sort().map(name => new RegExp(`^${escapeSpecifier(name)}(/|$)`))
-  productionExternalCache.set(id, patterns)
+  productionExternalCache.set(key, patterns)
   return patterns
 }
 
@@ -412,15 +424,16 @@ export function requestedExternals(
  * @param id - package name, as spelled at the preset call site.
  * @returns the baseline plus the package's explicit requests.
  */
-function clientExternals(id: string): ReadonlySet<string> {
-  const cached = clientExternalCache.get(id)
+function clientExternals(id: string, manifestPath?: string): ReadonlySet<string> {
+  const key = `${id}\0${manifestPath ?? ''}`
+  const cached = clientExternalCache.get(key)
   if (cached !== undefined) return cached
   const externals = new Set([
     ...PLATFORM_MODULES,
     ...PRELOADED_CLIENT_EXTERNALS,
-    ...requestedExternals(id, workspaceManifest(id).dsh?.client ?? {}),
+    ...requestedExternals(id, workspaceManifest(id, manifestPath).dsh?.client ?? {}),
   ])
-  clientExternalCache.set(id, externals)
+  clientExternalCache.set(key, externals)
   return externals
 }
 
@@ -470,8 +483,8 @@ function asyncChunkRequirePlugin(): TsdownPlugin {
   }
 }
 
-function clientConfig(id: string, entry: string, clientBanner?: (fileName: string) => string | undefined): UserConfig {
-  const isRequested = (specifier: string): boolean => clientExternals(id).has(specifier)
+function clientConfig(id: string, entry: string, clientBanner?: (fileName: string) => string | undefined, manifestPath?: string): UserConfig {
+  const isRequested = (specifier: string): boolean => clientExternals(id, manifestPath).has(specifier)
   const isolation = clientInputIsolation(id)
   return {
     name: `${id}/client`,

@@ -93,6 +93,8 @@ kind: "package-group"
 <a id="related-documentation"></a>
 ## 相关文档
 
+共享的 `tsdown.client.ts` 构建预设为根工作区以外的独立插件接受显式 `manifest` 路径。它验证包名并使用该 manifest 的依赖和外部模块声明；普通调用方保持工作区发现行为。生成的 factory 仍通过现有模块加载器解析共享浏览器服务。
+
 先从子系统参考与两份拥有跨包组合决策的 Agent Note 读起，再看服务于本页的宿主半侧。
 
 - [客户端模块子系统](../../docs/subsystems/client-modules.zh.md)——web 插件表：`dsh.client` 声明、启动图协议与 bundle 路由。

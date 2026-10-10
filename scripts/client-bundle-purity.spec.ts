@@ -45,6 +45,34 @@ function clientConfigs(id = REQUESTING_PACKAGE) {
 }
 
 describe('client bundle build faces', () => {
+  it('reads an explicit manifest without changing another build of the same package', () => {
+    const root = mkdtempSync(join(tmpdir(), 'dsh-client-manifests-'))
+    onTestFinished(() => { rmSync(root, { recursive: true, force: true }) })
+    const id = '@fixture/external-client'
+    const external = '@deepseek-ai/dsh-client-extra'
+    const first = join(root, 'first.json')
+    const second = join(root, 'second.json')
+    writeFileSync(first, JSON.stringify({ name: id, dependencies: { 'external-dependency': '1' }, dsh: { client: { external: [external] } } }))
+    writeFileSync(second, JSON.stringify({ name: id }))
+    const buildFaces = (manifest: string) => clientBundle(id, [], { manifest })({ env: {} })
+    const firstConfigs = buildFaces(first)
+    const secondConfigs = buildFaces(second)
+    const isExternal = (configs: UserConfig[], platform: string, specifier: string): unknown => {
+      const predicate = configs.find(config => config.platform === platform)?.deps?.neverBundle
+      if (typeof predicate !== 'function') throw new Error('External predicate missing')
+      return predicate(specifier, undefined, false)
+    }
+    expect(isExternal(firstConfigs, 'node', 'external-dependency/subpath')).toBe(true)
+    expect(isExternal(secondConfigs, 'node', 'external-dependency/subpath')).toBe(false)
+    expect(isExternal(firstConfigs, 'browser', external)).toBe(true)
+    expect(isExternal(secondConfigs, 'browser', external)).toBe(false)
+    expect(() => isExternal(buildFaces(first), 'node', 'external-dependency')).not.toThrow()
+    expect(() => isExternal(clientBundle('@fixture/other', [], { manifest: first })({ env: {} }), 'browser', external)).toThrow('must declare')
+    expect(() => isExternal(clientConfigs(id), 'browser', external)).toThrow('no packages')
+    writeFileSync(join(root, 'invalid.json'), JSON.stringify({ name: '@fixture/other' }))
+    expect(() => isExternal(buildFaces(join(root, 'invalid.json')), 'browser', external)).toThrow('must declare')
+  })
+
   it('watches source in development and consumes emitted JavaScript in the Client build', () => {
     const bundle = clientBundle('@deepseek-ai/dsh-client-test', ['lib/types/index.js'])
     const development = bundle({ env: {} }).find(config => config.platform === 'browser')

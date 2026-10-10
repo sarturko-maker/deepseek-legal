@@ -4,14 +4,10 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import { basename } from 'node:path'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import { brandString } from '@deepseek-ai/dsh-brand'
-import type { Branded } from '@deepseek-ai/dsh-brand'
+import type { EditorAccessToken, EditorFileId } from './types.ts'
+export type { EditorAccessToken, EditorFileId } from './types.ts'
 import type { DocumentHash } from '../document.ts'
 import type { DocumentEditor, DocumentStore } from '../store.ts'
-
-/** Opaque URL-safe identity of one editor lifetime. */
-export type EditorFileId = Branded<'EditorFileId'>
-/** Secret bearer capability; never include it in model results or logs. */
-export type EditorAccessToken = Branded<'EditorAccessToken'>
 
 /** Deployment limits and the parent origin advertised to the editor. */
 export interface WopiConfig {
@@ -30,6 +26,7 @@ export interface EditorGrant {
 }
 
 interface Entry {
+  session: SessionId
   editor: DocumentEditor
   digest: Buffer
   lifetime: AbortController
@@ -114,7 +111,7 @@ export class WopiHost {
       const snapshot = await editor.read()
       if (this.disposed) throw new Error('The editor host has closed.')
       const expiresAt = Date.now() + this.config.tokenLifetimeMs
-      const entry: Entry = { editor, digest: digest(accessToken), lifetime, expiresAt,
+      const entry: Entry = { session, editor, digest: digest(accessToken), lifetime, expiresAt,
         currentHash: snapshot.view.currentHash, lock: '', lockExpiresAt: 0,
         finish: finished.resolve, done, tail: Promise.resolve(), pending: 0, closed: false, timer: undefined }
       this.entries.set(fileId, entry)
@@ -143,10 +140,12 @@ export class WopiHost {
 
   /** Revoke a capability and await active requests and writer-lock release.
    * @param fileId Editor lifetime returned by open.
+   * @param session When supplied, only this owning Session may revoke the capability.
    */
-  async close(fileId: EditorFileId): Promise<void> {
+  async close(fileId: EditorFileId, session?: SessionId): Promise<void> {
     const entry = this.entries.get(fileId)
     if (entry === undefined) return
+    if (session !== undefined && entry.session !== session) throw new Error('This editor belongs to another Session.')
     entry.closed = true
     if (entry.timer !== undefined) clearTimeout(entry.timer)
     entry.lifetime.abort()

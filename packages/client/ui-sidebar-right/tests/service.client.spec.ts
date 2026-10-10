@@ -739,6 +739,20 @@ describe('explicit tab resource cleanup', () => {
   })
 })
 
+it('retains a tab until its asynchronous owner permits removal', () => {
+  const h = harness()
+  h.adopt(SESSION, h.instance)
+  h.publish()
+  h.controller.openResource('dsh-resource://file/session/s-test/contract')
+  const tabId = h.tabOf('contract')
+  const release = h.controller.registerCloseHandler('text', () => false)
+  h.controller.closeIn(SESSION, tabId)
+  expect(h.layout().tabs[tabId]).toBeDefined()
+  release()
+  h.controller.closeIn(SESSION, tabId)
+  expect(h.layout().tabs[tabId]).toBeUndefined()
+})
+
 it('releases close handlers without a stale disposer removing a replacement', () => {
   const h = harness()
   h.adopt(SESSION, h.instance)

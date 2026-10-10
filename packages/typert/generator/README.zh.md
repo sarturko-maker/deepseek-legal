@@ -49,6 +49,8 @@ files:
 
 ### 在 tsdown 构建中运行生成
 
+独立插件可在 `WorkspaceTypertGenerator` 或 `WorkspaceAnalyzer` 上显式扩展 `packageDirectories`（默认 `['packages']`），并选择 `hostConfig` / `clientConfig`。所选编译器聚合配置必须包含这些插件和协议的 lookup 声明。包目录影响注册发现及其缓存标识，不会把插件纳入仓库的默认构建。
+
 包的 `./tsdown` 子路径为根 tsdown 配置提供 `typertPlugin()`：它在打包前转换 TypeScript 依赖中的标准装饰器，并在包输出根目录生成模型驱动的 face 产物。`package` 模式只生成当前打包的包；`workspace` 模式对每个显式贡献方各生成一次。
 
 -----

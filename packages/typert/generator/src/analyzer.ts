@@ -69,6 +69,8 @@ export interface WorkspaceAnalyzerOptions {
   readonly hostConfig?: string
   /** Client aggregate path, relative to {@link root}; absent files are skipped. */
   readonly clientConfig?: string
+  /** Package directories relative to root; defaults to the workspace's packages directory. */
+  readonly packageDirectories?: readonly string[]
   /** Optional package-name subset for an incremental generation pass. */
   readonly packages?: readonly string[]
   /** Independently compiled faces to materialize; both are analyzed by default. */
@@ -287,7 +289,7 @@ export class WorkspaceCaches {
 export class WorkspaceAnalyzer {
   private readonly options: Required<Pick<
     WorkspaceAnalyzerOptions,
-    'root' | 'hostConfig' | 'clientConfig' | 'faces' | 'checkDiagnostics' | 'mode'
+    'root' | 'hostConfig' | 'clientConfig' | 'packageDirectories' | 'faces' | 'checkDiagnostics' | 'mode'
   >> & Pick<WorkspaceAnalyzerOptions, 'packages'>
   private queuedEdit: SourceEdit | undefined
   private readonly crossFaceLinks = new Map<string, CrossFaceLink>()
@@ -300,6 +302,7 @@ export class WorkspaceAnalyzer {
       root: realPath(options.root),
       hostConfig: options.hostConfig ?? 'tsconfig.host.json',
       clientConfig: options.clientConfig ?? 'tsconfig.client.json',
+      packageDirectories: options.packageDirectories ?? ['packages'],
       faces: options.faces ?? ['host', 'client'],
       checkDiagnostics: options.checkDiagnostics ?? true,
       mode: options.mode ?? 'check',
@@ -474,7 +477,8 @@ export class WorkspaceAnalyzer {
   }
 
   private loadRegistrations(includeVendor = false): PackageRegistration[] {
-    const inventoryKey = `${this.options.root}\0${this.options.hostConfig}\0${this.options.clientConfig}\0${String(includeVendor)}`
+    const inventoryKey = JSON.stringify([this.options.root, this.options.hostConfig, this.options.clientConfig,
+      this.options.packageDirectories, includeVendor])
     const cached = this.caches.registrations.get(inventoryKey)
     if (cached !== undefined) return cached
     const registrations: PackageRegistration[] = []
@@ -485,7 +489,7 @@ export class WorkspaceAnalyzer {
       for (const reference of aggregate.parsed.projectReferences ?? []) {
         const configPath = projectConfigPath(reference.path)
         const packageRoot = dirname(configPath)
-        if (!isWithin(realPath(packageRoot), join(this.options.root, 'packages'))
+        if (!this.options.packageDirectories.some(directory => isWithin(realPath(packageRoot), resolve(this.options.root, directory)))
           && !(includeVendor && isWithin(realPath(packageRoot), join(this.options.root, 'vendor')))) continue
         const manifestPath = join(packageRoot, 'package.json')
         if (!existsSync(manifestPath)) continue

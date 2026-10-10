@@ -1,0 +1,8 @@
+version: 1
+scenario: legal-editor-contract
+profile: headless
+composition: legal-editor-contract
+recording: live
+header:
+  class: legal-editor-contract
+  pin: true

@@ -1,5 +1,6 @@
-- insert:
-    - id: deepseek-legal-editor
-      name: ../dist/editor/index.js
-      config:
-        parentOrigin: dsh-app://app
+- id: deepseek-legal-redlining
+  config:
+    editor:
+      parentOrigin: dsh-app://app
+      editorOrigin: http://127.0.0.1:9980
+      callbackOrigin: http://host.docker.internal:19387
