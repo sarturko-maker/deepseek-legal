@@ -49,6 +49,12 @@ export interface ILayout {
    *   resize handle; independent of the underlying grid track.
    */
   openRightbar(track: boolean, fullscreen: boolean): void
+  /**
+   * Prefer an initial right panel width without overriding an earlier preference or drag.
+   * The frame still protects the center's minimum width.
+   * @param ratio - fraction of the measured frame width, clamped to the panel's range.
+   */
+  preferRightbarWidth(ratio: number): void
   /** Report the right panel as hidden: no track, no handle. */
   closeRightbar(): void
 }
@@ -97,6 +103,11 @@ export class LayoutController implements ILayout {
   /** Report the right panel's track and fullscreen presentation. */
   openRightbar(track: boolean, fullscreen: boolean): void {
     this.panels.openRightbar(track, fullscreen)
+  }
+
+  /** Prefer an initial panel width while preserving an earlier choice. */
+  preferRightbarWidth(ratio: number): void {
+    this.panels.preferRightbarWidth(ratio)
   }
 
   /** Report the right panel as hidden: no track, no handle. */

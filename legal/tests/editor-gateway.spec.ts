@@ -12,7 +12,8 @@ import * as EditorPlugin from '../src/editor/index.ts'
 import { DocumentStore } from '../src/store.ts'
 import { contractFixture } from './fixture.ts'
 
-async function fixture() {
+async function fixture(presentation: { uiMode?: 'classic' | 'notebookbar'; showRuler?: boolean;
+  showPropertiesSidebar?: boolean; paneWidthRatio?: number } = {}) {
   const root = await mkdtemp(join(tmpdir(), 'legal-launch-'))
   onTestFinished(() => rm(root, { recursive: true, force: true }))
   const workspace = join(root, 'workspace')
@@ -28,7 +29,7 @@ async function fixture() {
   await ctx.plugin(FsLocal, { cwd: workspace })
   await ctx.plugin(WebServer, { host: '127.0.0.1', port: 0 })
   const config = editorConfigSchema.parse({ parentOrigin: 'dsh-app://app',
-    editorOrigin: 'http://127.0.0.1:9980', callbackOrigin: `http://host.docker.internal:${ctx.webServer.port}` })
+    editorOrigin: 'http://127.0.0.1:9980', callbackOrigin: `http://host.docker.internal:${ctx.webServer.port}`, ...presentation })
   await ctx.plugin(EditorPlugin, config)
   vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockImplementation(async () => new Response(
     '<wopi-discovery><action ext="docx" name="edit" urlsrc="http://127.0.0.1:9980/browser/pinned/cool.html"/></wopi-discovery>')))
@@ -41,6 +42,11 @@ it('imports the workspace DOCX and reopens its managed original after writer rel
   const f = await fixture()
   const first = await f.ctx.legalEditorGateway.open(f.scope, 'contract.docx', new AbortController().signal)
   expect(first.title).toBe('contract.docx')
+  expect(first.source.replaceAll('\\', '/')).toBe(join(f.workspace, 'contract.docx').replaceAll('\\', '/'))
+  expect(first.uiDefaults).toBe('UIMode=classic;TextRuler=false;TextSidebar=false')
+  expect(first.paneWidthRatio).toBe(2 / 3)
+  expect(first.showTrackedChanges).toBe(true)
+  expect(first.recordChanges).toBe(true)
   expect(new URL(first.editorUrl).searchParams.get('WOPISrc'))
     .toBe(`http://host.docker.internal:${f.ctx.webServer.port}/legal/wopi/files/${first.fileId}`)
   await expect(f.ctx.legalEditorGateway.close({ ...f.scope, sessionId: SessionId('another-session') }, first.fileId))
@@ -51,6 +57,16 @@ it('imports the workspace DOCX and reopens its managed original after writer rel
   const reopened = await f.ctx.legalEditorGateway.open(f.scope, 'contract.docx', new AbortController().signal)
   expect(reopened.fileId).not.toBe(first.fileId)
   expect(await f.store.read(f.scope.sessionId)).toEqual(initial)
+})
+
+it('launches with configured editor presentation while retaining the original source identity', async () => {
+  const f = await fixture({
+    uiMode: 'notebookbar', showRuler: true, showPropertiesSidebar: true, paneWidthRatio: 0.5,
+  })
+  const launch = await f.ctx.legalEditorGateway.open(f.scope, 'contract.docx', new AbortController().signal)
+  expect(launch.uiDefaults).toBe('UIMode=notebookbar;TextRuler=true;TextSidebar=true')
+  expect(launch.paneWidthRatio).toBe(0.5)
+  await f.ctx.legalEditorGateway.close(f.scope, launch.fileId)
 })
 
 it('rejects a sibling path and an escaping directory link before importing any document', async () => {

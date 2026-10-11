@@ -5,6 +5,7 @@ import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar-right/client'
+import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
 import type { TabId } from '@deepseek-ai/dsh-client-ui-sidebar-right/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import { TYPERT_REMOTE } from '@deepseek-legal/redlining/remote'
@@ -24,7 +25,7 @@ declare module '@deepseek-ai/dsh-client-ui-sidebar-right/client' {
 
 const ID = '@deepseek-legal/redlining'
 /** Existing Client services; no replacement chat or layout owner. */
-export const inject = ['remote', 'slots', 'locale', 'sidebarRightTabs', 'sidebarRight']
+export const inject = ['remote', 'slots', 'locale', 'sidebarRightTabs', 'sidebarRight', 'layout']
 
 /** Register the authenticated Remote contribution, explicit preview action and editor tab.
  * @param ctx Existing native Client plugin context.
@@ -46,6 +47,7 @@ function registerEditor(ctx: Context): void {
     return false
   }))
   const pane: EditorPaneInjected = {
+    preferWidth: ratio => ctx.layout.preferRightbarWidth(ratio),
     launch: (session, path, signal) => ctx.remote.legalEditor.open(session, path, signal),
     release: (session, file) => ctx.remote.legalEditor.close(session, file),
     bindClose(tab, close) {

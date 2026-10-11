@@ -9,11 +9,13 @@ import type { TabId } from '@deepseek-ai/dsh-client-ui-sidebar-right/client'
 import type { EditorFileId, EditorLaunch } from '@deepseek-legal/redlining/editor/types'
 import { editorMessage, sendEditorMessage } from './editor-bridge.ts'
 import { EditorSession } from './editor-session.ts'
+import { editorFilename } from './editor-label.ts'
 import type { NS, LegalEditorKey } from './locales.ts'
 import css from './editor-pane.module.css'
 
 /** Authenticated operations and the close hook injected by the Client plugin. */
 export interface EditorPaneInjected {
+  readonly preferWidth: (ratio: number) => void
   readonly launch: (session: SessionId, path: string, signal: AbortSignal) => Promise<RemoteResult<EditorLaunch>>
   readonly release: (session: SessionId, file: EditorFileId) => Promise<RemoteResult<void>>
   readonly bindClose: (tab: TabId, close: () => void) => () => void
@@ -66,6 +68,7 @@ export function EditorPane(props: PropsRuntime<'sidebar.right.pane.tab'>
 
   useEffect(() => {
     if (grant === undefined) return
+    props.preferWidth(grant.paneWidthRatio)
     const origin = new URL(grant.editorUrl).origin
     let disposed = false
     const send = (id: string, values: Record<string, unknown> = {}): void => {
@@ -94,16 +97,33 @@ export function EditorPane(props: PropsRuntime<'sidebar.right.pane.tab'>
       if (message !== undefined) editor.receive(message)
     }
     window.addEventListener('message', listener)
-    form.current?.submit()
+    let submitted = false
+    const submit = (): void => {
+      const viewport = frame.current?.getBoundingClientRect()
+      if (submitted || viewport === undefined || viewport.width === 0 || viewport.height === 0) return
+      submitted = true
+      observer.disconnect()
+      form.current?.submit()
+    }
+    const observer = new ResizeObserver(submit)
+    if (frame.current !== null) observer.observe(frame.current)
+    const paint = requestAnimationFrame(submit)
     return () => {
+      cancelAnimationFrame(paint); observer.disconnect()
       disposed = true; unbind(); window.removeEventListener('message', listener)
       editor.dispose()
       save.current = undefined; close.current = undefined
     }
-  }, [grant, props.bindClose, props.release, props.sessionId, info.tab.id, info.tab.actions])
+  }, [grant, props.preferWidth, props.bindClose, props.release, props.sessionId, info.tab.id, info.tab.actions])
 
   const failed = status === 'failed' || status === 'openFailed'
+  const filename = grant?.title ?? (editorFilename(path) || props.t('title'))
   return <div className={css.pane}>
+    <div className={css.identity}>
+      <strong className={css.filename} title={filename}>{filename} · {props.t('workingCopy')}</strong>
+      <span className={css.storage}>{props.t('storage')}</span>
+      {grant !== undefined && <span className={css.source} title={grant.source}>{props.t('original')}: {grant.source}</span>}
+    </div>
     <div className={css.toolbar}>
       <span className={css.status} role="status">{props.t(status)}</span>
       {failed && <Button size="sm" onClick={() => setAttempt(value => value + 1)}>{props.t('retry')}</Button>}
@@ -111,13 +131,17 @@ export function EditorPane(props: PropsRuntime<'sidebar.right.pane.tab'>
       <Button size="sm" disabled={!ready || busy} onClick={() => close.current?.()}>{props.t('close')}</Button>
     </div>
     <p className={css.notice}>{props.t('manual')}</p>
-    {grant !== undefined && <>
-      <form ref={form} method="post" action={grant.editorUrl} target={`legal-editor-${grant.fileId}`} hidden>
-        <input type="hidden" name="access_token" value={grant.accessToken} />
-        <input type="hidden" name="access_token_ttl" value={grant.expiresAt} />
-      </form>
-      <iframe ref={frame} className={css.frame} name={`legal-editor-${grant.fileId}`} title={props.t('title')}
-        allow="clipboard-read; clipboard-write" referrerPolicy="no-referrer" />
-    </>}
+    <div className={css.viewport}>
+      {grant !== undefined && <>
+        <form ref={form} method="post" action={grant.editorUrl} target={`legal-editor-${grant.fileId}`} hidden>
+          <input type="hidden" name="access_token" value={grant.accessToken} />
+          <input type="hidden" name="access_token_ttl" value={grant.expiresAt} />
+          <input type="hidden" name="ui_defaults" value={grant.uiDefaults} />
+        </form>
+        <iframe ref={frame} className={css.frame} name={`legal-editor-${grant.fileId}`} title={props.t('title')}
+          allow="clipboard-read; clipboard-write" referrerPolicy="no-referrer" />
+      </>}
+      {status === 'loading' && <div className={css.loading}>{props.t(status)}</div>}
+    </div>
   </div>
 }

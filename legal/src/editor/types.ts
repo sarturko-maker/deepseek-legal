@@ -12,6 +12,15 @@ export interface EditorLaunch {
   readonly expiresAt: number
   readonly editorUrl: string
   readonly title: string
+  /** Original import location; the iframe edits the Session's managed copy. */
+  readonly source: string
+  /** CODE presentation defaults supplied through its launch form. */
+  readonly uiDefaults: string
+  /** Initial pane preference; an existing user-selected width takes precedence. */
+  readonly paneWidthRatio: number
+  /** Initial review settings, explicitly set after CODE reports document readiness. */
+  readonly showTrackedChanges: boolean
+  readonly recordChanges: boolean
   readonly loadTimeoutMs: number
   readonly saveTimeoutMs: number
 }

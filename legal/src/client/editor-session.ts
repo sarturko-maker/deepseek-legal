@@ -16,7 +16,9 @@ export class EditorSession {
   private disposed = false
   private expired = false
   private state: EditorState = { status: 'loading', ready: false, busy: false }
-  private pending: ReturnType<typeof Promise.withResolvers<void>> | undefined
+  private revision = 0
+  private unsaved = false
+  private pending: { operation: ReturnType<typeof Promise.withResolvers<void>>; revision: number } | undefined
   private closing: Promise<void> | undefined
   private saveTimer: ReturnType<typeof setTimeout> | undefined
   private readonly loadTimer: ReturnType<typeof setTimeout>
@@ -28,7 +30,8 @@ export class EditorSession {
    * @param report Feedback held by the retained pane.
    * @param release Revoke this grant and await Host writer release.
    */
-  constructor(private readonly launch: Pick<EditorLaunch, 'loadTimeoutMs' | 'saveTimeoutMs' | 'expiresAt'>,
+  constructor(private readonly launch: Pick<EditorLaunch, 'loadTimeoutMs' | 'saveTimeoutMs' | 'expiresAt'
+    | 'showTrackedChanges' | 'recordChanges'>,
     private readonly send: (id: string, values?: Record<string, unknown>) => void,
     private readonly report: (state: EditorState) => void,
     private readonly release: () => Promise<void>) {
@@ -47,18 +50,27 @@ export class EditorSession {
     if (message.MessageId === 'App_LoadingStatus' && message.Values?.Status === 'Frame_Ready') {
       this.send('Host_PostmessageReady')
     }
-    if ((message.MessageId === 'App_LoadingStatus' && message.Values?.Status === 'Document_Loaded')
-      || (message.MessageId === 'Action_Load_Resp' && message.Values?.success === true)) {
+    if (!this.loaded && message.MessageId === 'App_LoadingStatus' && message.Values?.Status === 'Document_Loaded') {
       clearTimeout(this.loadTimer)
       this.loaded = true
-      this.update({ status: 'source', ready: true })
+      this.update({ status: 'ready', ready: true })
+      this.send('Send_UNO_Command', { Command: '.uno:ShowTrackedChanges',
+        Args: { ShowTrackedChanges: { type: 'boolean', value: this.launch.showTrackedChanges } } })
+      this.send('Send_UNO_Command', { Command: '.uno:TrackChanges',
+        Args: { TrackChanges: { type: 'boolean', value: this.launch.recordChanges } } })
+    }
+    if (message.MessageId === 'Doc_ModifiedStatus' && message.Values?.Modified === true) {
+      this.revision++
+      this.unsaved = true
+      if (this.loaded && this.pending === undefined && this.state.status !== 'saveFailed') this.update({ status: 'unsaved' })
     }
     if (message.MessageId !== 'Action_Save_Resp' || this.pending === undefined) return
     if (this.saveTimer !== undefined) clearTimeout(this.saveTimer)
-    const operation = this.pending
+    const { operation, revision } = this.pending
     this.pending = undefined
     if (message.Values?.success === true || message.Values?.result === 'unmodified') {
-      this.update({ status: 'saved', busy: false })
+      this.unsaved = this.revision !== revision
+      this.update({ status: this.unsaved ? 'unsaved' : 'saved', busy: false })
       operation.resolve()
     } else {
       this.update({ status: 'saveFailed', busy: false })
@@ -70,10 +82,10 @@ export class EditorSession {
    * @returns Resolves only on a positive or unchanged save acknowledgement.
    */
   save(): Promise<void> {
-    if (this.pending !== undefined) return this.pending.promise
+    if (this.pending !== undefined) return this.pending.operation.promise
     if (this.disposed || this.expired || !this.loaded) return Promise.reject(new Error('The editor is not ready to save.'))
     const operation = Promise.withResolvers<void>()
-    this.pending = operation
+    this.pending = { operation, revision: this.revision }
     this.update({ status: 'saving', busy: true })
     this.saveTimer = setTimeout(() => {
       this.update({ status: 'saveFailed', busy: false })
@@ -96,6 +108,7 @@ export class EditorSession {
     if (this.closing !== undefined) return this.closing
     this.closing = (async () => {
       if (this.loaded) await this.save()
+      if (this.unsaved) throw new Error('The document changed during saving. Save again before closing.')
       this.update({ busy: true })
       await this.release()
     })().catch((error: unknown) => {
@@ -112,7 +125,7 @@ export class EditorSession {
     clearTimeout(this.loadTimer)
     clearTimeout(this.expiryTimer)
     if (this.saveTimer !== undefined) clearTimeout(this.saveTimer)
-    this.pending?.reject(new Error('Editor pane closed.'))
+    this.pending?.operation.reject(new Error('Editor pane closed.'))
     this.pending = undefined
   }
 

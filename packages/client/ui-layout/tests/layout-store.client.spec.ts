@@ -8,6 +8,36 @@ beforeEach(() => { vi.stubGlobal('innerWidth', 1920) })
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks() })
 
 describe('createLayoutStore', () => {
+  it('applies an initial occupant width immediately and retains it across reopening and resizing', () => {
+    const { store, actions } = createLayoutStore().create()
+    actions.openRightbar(true, false)
+    actions.preferRightbarWidth(2 / 3)
+    expect(store.getSnapshot().layoutInfo).toMatchObject({ rightbar: 1280, rightbarInstant: true })
+    actions.closeRightbar()
+    actions.setViewportWidth(1400)
+    actions.openRightbar(true, false)
+    actions.preferRightbarWidth(0.5)
+    expect(store.getSnapshot().layoutInfo.rightbar).toBe(1280)
+  })
+
+  it('preserves a user drag before and after an occupant width preference', () => {
+    const before = createLayoutStore().create()
+    before.actions.setRightbar(600)
+    before.actions.preferRightbarWidth(2 / 3)
+    expect(before.store.getSnapshot().layoutInfo.rightbar).toBe(600)
+    const after = createLayoutStore().create()
+    after.actions.preferRightbarWidth(2 / 3)
+    after.actions.setRightbar(700)
+    after.actions.preferRightbarWidth(2 / 3)
+    expect(after.store.getSnapshot().layoutInfo).toMatchObject({ rightbar: 700, rightbarInstant: false })
+  })
+
+  it.each([[0, 300], [1, 1344]])('clamps an occupant width ratio %s to %s pixels', (ratio, px) => {
+    const { store, actions } = createLayoutStore().create()
+    actions.preferRightbarWidth(ratio)
+    expect(store.getSnapshot().layoutInfo.rightbar).toBe(px)
+  })
+
   it('starts with the default sidebar and no right panel preference', () => {
     const { store } = createLayoutStore().create()
     expect(store.getSnapshot()).toEqual({
@@ -17,6 +47,7 @@ describe('createLayoutStore', () => {
         viewportWidth: 1920,
         narrowExpanded: false,
         rightbar: null,
+        rightbarWidthChosen: false,
         rightbarShown: false,
         rightbarTrack: false,
         rightbarFullscreen: false,

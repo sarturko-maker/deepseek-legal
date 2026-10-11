@@ -66,9 +66,13 @@ corepack pnpm --dir legal run test:e2e
 
 在[可选补丁](editor/cordis.patch.yml)中，同一 Loader 条目的 `config.editor` 在[bundle 补丁](cordis.patch.yml)之后启用。原生 Desktop profile 提供 Host Web 服务器、Workspace Files lookup、经过身份验证的 Gateway 和现有 Client slots。默认 bundle 仍可无界面运行。每个 Loader 包贡献一个 Client factory；编辑器 Host provider 是文档插件的子插件。
 
-在所选 Session 的工作区内打开 DOCX 预览，并选择**打开合同修订**。普通预览仍显示源文件；独立的**合同编辑器**标签页显示受管理工作副本。Gateway 解析 Session 的工作区，拒绝越界路径和目录链接，发现配置的回环编辑器，并取得其写入生命周期。原始源文件保持不变。在同一 Session 中重新打开同一源文件会继续使用已保存的工作副本。
+在所选 Session 的工作区内打开 DOCX 预览，并选择**打开合同修订**。普通预览显示源文件；**文件名 · 工作副本**标签页显示受管理文档。标题区域显示原件导入路径，并说明工作副本存储在本 Session 中。在同一 Session 重新打开同一源文件会继续使用已保存的工作副本。Gateway 在取得写入权前拒绝越界路径和目录链接。
 
-使用**保存**创建显式检查点，或在 agent 修改前使用**保存并关闭**。标签页的关闭控件也会请求保存，并等待确认和写入权释放。保存失败或超时会保留面板并显示反馈；迟到的确认不会完成较新的保存请求。Collabora 提供编辑、批注和审阅控件。首次运行时的欢迎对话框可使用其关闭控件关闭。需要更多空间时，可使用现有侧栏全屏控件。退出 Desktop 前请保存；窗口关闭和应用重新加载不执行标签页的显式保存流程。
+使用**保存**创建显式检查点，或在 agent 修改前使用**保存并关闭**。标签页关闭控件等待保存确认和写入权释放。编辑通知显示**有未保存的更改**；只有确认保存后才显示**已保存**。保存失败或超时会保留面板，保存期间观察到的新编辑会阻止关闭。紧凑的经典工具栏保留菜单、审阅、批注和缩放控件。面板首次请求框架宽度的三分之二，同时保留聊天区最小宽度；用户此前拖动的宽度优先。需要更多空间时，请使用 Harness 的拖动手柄和全屏控件。退出 Desktop 前请保存；关闭应用和重新加载不执行标签页保存流程。
+
+`config.editor` 控制呈现方式：`uiMode` 默认为 `classic`（也接受 `notebookbar`），`showRuler` 和 `showPropertiesSidebar` 默认为 `false`，`paneWidthRatio` 默认为 `2/3`，须为正数且不超过 `0.7`。浏览器在 iframe 尺寸可测量后提交 CODE 的 `ui_defaults`。实际编辑器错误仍可见；加载遮罩在文档就绪时结束，或显示可重试的失败信息。
+
+`showTrackedChanges` 和 `recordChanges` 默认为 `true`。每次文档加载时，适配器通过 CODE 的消息 API 显式启用修订显示和人工修订记录；律师随后可通过菜单调整这些设置。CODE 原生页面适配提供初始缩放。适配器不访问 iframe 私有对象，也不绕过跨源隔离。
 
 在整个编辑器生命周期内，适配器持有与 agent 修改相同的跨进程写入锁。在该生命周期结束前，其他写入方的操作会被拒绝。每次保存都会验证完整 DOCX 和投影、保留原文，并原子选择新的工作代次；相同字节保持原代次。现有 head 格式不变。关闭或卸载适配器会撤销访问权限、取消未完成的请求，并等待写入锁释放。聊天前的自动保存和交接尚未实现。
 
@@ -76,12 +80,14 @@ corepack pnpm --dir legal run test:e2e
 
 [容器配置](editor/compose.yml)固定 CODE，仅发布回环端口 9980，并允许回调到 `host.docker.internal` 上的 Host 端口 19387。嵌入策略仅允许 `dsh-app://app`；Electron 的 sandbox（沙箱）、context isolation 和 Web 安全保持启用。`LEGAL_EDITOR_PORT` 和 `LEGAL_HOST_PORT` 可覆盖部署端口；请同步更新可选补丁中的 `editorOrigin` 和 `callbackOrigin`。Docker Desktop 的 Linux 引擎和 WSL2 是独立的先决条件；Harness 仍以原生 Windows 应用运行。打开编辑器前，请使用 `docker compose -p deepseek-legal-editor -f legal/editor/compose.yml up -d` 启动专用实例。
 
+CODE 的 home mode 关闭启动欢迎和反馈提示，并限制最多十个同时打开的文档及二十个连接。更新弹窗已禁用。`LEGAL_EDITOR_HOME_MODE` 和 `LEGAL_EDITOR_UPDATE_POPUP` 可覆盖这些部署设置；修改后请重建专用 Compose 实例。产品品牌、声明及文档错误对话框仍然可用。
+
 <a id="packaging-and-upstream-updates"></a>
 ## 打包与上游更新
 
-法律功能位于 `legal/`，通过精确的 peer 版本导入 Harness 接口。三个小型上游扩展支持该功能：Typert 生成中的显式包目录、共享 Client 构建预设中的显式 manifest，以及可选的侧栏延迟关闭。普通调用方保持现有行为。agent-loop、聊天和 Desktop launcher 源码保持不变。不要将此 bundle 发布到 DeepSeek 的 npm 命名空间。
+法律功能位于 `legal/`，通过精确的 peer 版本导入 Harness 接口。四个小型上游扩展支持该功能：Typert 生成中的显式包目录、共享 Client 构建预设中的显式 manifest、可选的侧栏延迟关闭，以及保留用户拖动选择的初始面板宽度偏好。普通调用方保持现有行为。agent-loop、聊天和 Desktop launcher 源码保持不变。不要将此 bundle 发布到 DeepSeek 的 npm 命名空间。
 
-Harness 更新必须有意进行：选择上游发布版本，同时更新开发基线和精确的 DSH peer 版本，协调三个扩展，构建 Harness，然后运行此 bundle 的构建、检查、已记录 Session 回放、真实 CODE 往返测试和原生 Desktop 验收。不要在日常红线修订期间自动更新编辑器或文档引擎。让 `origin` 指向用户仓库，并将官方 Harness 视为单独的上游来源。
+Harness 更新必须有意进行：选择上游发布版本，同时更新开发基线和精确的 DSH peer 版本，协调四个扩展，构建 Harness，然后运行此 bundle 的构建、检查、已记录 Session 回放、真实 CODE 往返测试和原生 Desktop 验收。不要在日常红线修订期间自动更新编辑器或文档引擎。让 `origin` 指向用户仓库，并将官方 Harness 视为单独的上游来源。
 
 <a id="model-experience"></a>
 ## 模型体验

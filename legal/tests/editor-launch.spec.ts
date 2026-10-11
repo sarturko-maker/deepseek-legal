@@ -58,10 +58,17 @@ it('propagates caller cancellation to discovery', async () => {
 })
 
 it.each([
+  { uiMode: 'unsupported' },
+  { showRuler: 'false' },
+  { showPropertiesSidebar: 1 },
+  { paneWidthRatio: 0 },
+  { paneWidthRatio: 0.71 },
+  { showTrackedChanges: 'false' },
+  { recordChanges: 1 },
   { editorOrigin: 'http://0.0.0.0:9980' },
   { editorOrigin: 'http://127.0.0.1:9980/path' },
   { callbackOrigin: 'http://127.0.0.1:19387' },
   { parentOrigin: '*' },
-])('rejects an invalid configured origin %j', override => {
+])('rejects invalid editor configuration %j', override => {
   expect(editorConfigSchema.safeParse({ ...config, ...override }).success).toBe(false)
 })

@@ -6,7 +6,7 @@ services:
       - "127.0.0.1:${LEGAL_EDITOR_PORT:-9980}:9980"
     environment:
       aliasgroup1: "http://host.docker.internal:${LEGAL_HOST_PORT:-19387}"
-      extra_params: "--o:ssl.enable=false --o:ssl.termination=false"
+      extra_params: "--o:ssl.enable=false --o:ssl.termination=false --o:home_mode.enable=${LEGAL_EDITOR_HOME_MODE:-true} --o:allow_update_popup=${LEGAL_EDITOR_UPDATE_POPUP:-false}"
     command:
       - "--o:net.content_security_policy=frame-ancestors dsh-app://app;"
     cap_add:

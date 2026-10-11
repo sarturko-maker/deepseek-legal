@@ -18,6 +18,12 @@ export interface LaunchConfig {
   readonly maxDiscoveryBytes: number
   readonly loadTimeoutMs: number
   readonly saveTimeoutMs: number
+  readonly uiMode: 'classic' | 'notebookbar'
+  readonly showRuler: boolean
+  readonly showPropertiesSidebar: boolean
+  readonly showTrackedChanges: boolean
+  readonly recordChanges: boolean
+  readonly paneWidthRatio: number
 }
 
 /** Resolve the pinned editor's DOCX edit action; refuses redirects and different origins.
@@ -81,6 +87,9 @@ export class LegalEditorGateway extends TypertRemoteService {
       signal.throwIfAborted()
       editorUrl.searchParams.set('WOPISrc', new URL(`/legal/wopi/files/${grant.fileId}`, this.config.callbackOrigin).href)
       return { ...grant, editorUrl: editorUrl.href, title: basename(view.source),
+        source: view.source, paneWidthRatio: this.config.paneWidthRatio,
+        showTrackedChanges: this.config.showTrackedChanges, recordChanges: this.config.recordChanges,
+        uiDefaults: `UIMode=${this.config.uiMode};TextRuler=${this.config.showRuler};TextSidebar=${this.config.showPropertiesSidebar}`,
         loadTimeoutMs: this.config.loadTimeoutMs, saveTimeoutMs: this.config.saveTimeoutMs }
     } catch (error) { await this.ctx.legalEditor.close(grant.fileId); throw error }
   }

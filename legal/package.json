@@ -65,6 +65,7 @@
         "@deepseek-ai/dsh-api-gateway",
         "@deepseek-ai/dsh-client-locale",
         "@deepseek-ai/dsh-client-ui-renderer",
+        "@deepseek-ai/dsh-client-ui-layout",
         "@deepseek-ai/dsh-client-ui-session",
         "@deepseek-ai/dsh-client-ui-sidebar-right",
         "@deepseek-ai/dsh-client-ui-sidebar-documentpreview"
@@ -100,9 +101,13 @@
     "@deepseek-ai/dsh-client-ui-session": "0.2.0-rc.2",
     "@deepseek-ai/dsh-client-ui-sidebar-right": "0.2.0-rc.2",
     "@deepseek-ai/dsh-client-ui-sidebar-documentpreview": "0.2.0-rc.2",
-    "@deepseek-ai/dsh-client-ui-primitives": "0.2.0-rc.2"
+    "@deepseek-ai/dsh-client-ui-primitives": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-client-ui-layout": "0.2.0-rc.2"
   },
   "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-client-ui-layout": {
+      "optional": true
+    },
     "@deepseek-ai/dsh-host-webserver": {
       "optional": true
     },
@@ -163,6 +168,7 @@
     "@deepseek-ai/dsh-typert-protocol": "link:../packages/typert/protocol",
     "@deepseek-ai/dsh-client-locale": "link:../packages/client/locale",
     "@deepseek-ai/dsh-client-ui-renderer": "link:../packages/client/ui-renderer",
+    "@deepseek-ai/dsh-client-ui-layout": "link:../packages/client/ui-layout",
     "@deepseek-ai/dsh-client-ui-slots": "link:../packages/client/ui-slots",
     "@deepseek-ai/dsh-client-ui-session": "link:../packages/client/ui-session",
     "@deepseek-ai/dsh-client-ui-sidebar-right": "link:../packages/client/ui-sidebar-right",

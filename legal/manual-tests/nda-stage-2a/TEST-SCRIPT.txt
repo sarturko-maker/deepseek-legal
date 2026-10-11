@@ -24,8 +24,8 @@ Paste this into chat:
 Open legal/manual-tests/nda-stage-2a/one-way-nda.docx using the contract tools. Review this fictional NDA neutrally for both parties. Make it mutual: either party may disclose Confidential Information, and the other party owes the same confidentiality and restricted-use obligations when receiving it. Update the title, party-role definitions and any one-way wording consistently. Keep the one-year disclosure period, three-year confidentiality period, twenty-business-day return/deletion deadline, clause 7 and the England and Wales governing-law/courts clause unchanged. Apply actual Word tracked changes to the managed working document using contract_redline, using the latest current hash. Preserve the original file and leave revisions outstanding. Do not replace the document with a rewritten file or only describe suggested wording in chat. Tell me when the redline is applied.
 
 4. Wait for the agent's amendment tool to finish successfully. If a permission prompt appears, approve access to this synthetic document through the normal controls.
-5. In Workspace files, click legal > manual-tests > nda-stage-2a > one-way-nda.docx. Click Open for redlining. Dismiss the normal Collabora welcome dialog if needed; use the sidebar fullscreen control for more space.
-6. Inspect the title, parties and clause 2. Use the editor's Review/Tracking controls to show revisions if they are hidden. Look for inserted/deleted text and revision details; a chat explanation alone does not pass.
+5. In Workspace files, click legal > manual-tests > nda-stage-2a > one-way-nda.docx. Click Open for redlining. Expect no welcome/update/feedback popup, a compact toolbar and a filename · Working copy tab. Its header must show the original source path and state that the working copy belongs to this Session. Use the existing resize handle or fullscreen control for more space.
+6. Inspect the title, parties and clause 2. Revision display and human change recording start enabled. Look for inserted/deleted text and revision details; a chat explanation alone does not pass. Confirm the document fits when resizing the pane and in fullscreen, and that a width you drag is retained on reopening.
 
 Expected: both parties can disclose and receive; both owe reciprocal duties. The title/role definitions and one-way wording have visible tracked changes. Clause 5 still says three years, clause 6 still says twenty business days, and clause 8 still says England and Wales.
 
@@ -43,7 +43,7 @@ Expected: the mutual changes remain, with further tracked changes for two years 
 
 HUMAN EDIT — SCOTTISH LAW AND COURTS
 
-9. In the editor, find clause 8. Enable recording of your edits using the Review/Tracking controls. Replace the clause's two sentences with:
+9. In the editor, find clause 8. Confirm that recording of your edits is enabled using the Review/Tracking controls. Replace the clause's two sentences with:
 
 This agreement is governed by the laws of Scotland. The courts of Scotland have exclusive jurisdiction over disputes arising from this agreement.
 

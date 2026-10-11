@@ -31,6 +31,8 @@ kind: "package-reference"
 
 全局面板占据 root 作用域的 `main` keyed slot；`conversation` 是为会话界面保留的 key。`ctx.layout.selectPanel(id)` 选中已注册面板，`null` 则选中会话界面，但不改变当前会话。默认组合不注册任何全局面板。
 
+占用方可调用 `ctx.layout.preferRightbarWidth(ratio)`，请求实测框架宽度的初始比例。在当前窗口生命周期内，首次显式偏好或用户拖动优先；后续请求、窗口调整和重新打开保留该像素宽度偏好。原有最小/最大宽度及中栏保护仍适用。初始请求不使用宽度过渡，使嵌入式编辑器可在加载前测量视口。
+
 <a id="window-chrome-seat"></a>
 ### 窗口 chrome 座
 

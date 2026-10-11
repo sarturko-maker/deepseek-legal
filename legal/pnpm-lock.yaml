@@ -54,6 +54,9 @@ importers:
       '@deepseek-ai/dsh-client-locale':
         specifier: link:../packages/client/locale
         version: link:../packages/client/locale
+      '@deepseek-ai/dsh-client-ui-layout':
+        specifier: link:../packages/client/ui-layout
+        version: link:../packages/client/ui-layout
       '@deepseek-ai/dsh-client-ui-primitives':
         specifier: link:../packages/client/ui-primitives
         version: link:../packages/client/ui-primitives

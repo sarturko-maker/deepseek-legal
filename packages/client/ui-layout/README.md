@@ -31,6 +31,8 @@ The root slot composes the sidebar, main content, and right column. The sidebar 
 
 Global panels occupy the root-scoped `main` keyed slot; `conversation` is the reserved key for the Conversation. `ctx.layout.selectPanel(id)` selects a registered panel, and `null` selects the Conversation without changing the current Session. No global panel is registered by the shipped composition.
 
+An occupant may call `ctx.layout.preferRightbarWidth(ratio)` to request its initial fraction of the measured frame. The first explicit preference or user drag wins for the window lifetime; later requests, resizes and reopening preserve that pixel preference. The usual minimum/maximum widths and center protection still apply. The initial request settles without a width transition so an embedded editor can measure its viewport before loading.
+
 <a id="window-chrome-seat"></a>
 ### Window-chrome seat
 

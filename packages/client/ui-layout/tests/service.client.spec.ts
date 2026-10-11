@@ -11,12 +11,21 @@ function fakePanels(): PanelActions {
     toggleSidebar: vi.fn(),
     setViewportWidth: vi.fn(),
     setRightbar: vi.fn(),
+    preferRightbarWidth: vi.fn(),
     openRightbar: vi.fn(),
     closeRightbar: vi.fn(),
   }
 }
 
 describe('LayoutController', () => {
+  it('forwards an occupant width preference without changing panel visibility', () => {
+    const panels = fakePanels()
+    const service = new LayoutController(panels, () => true, createSnapshotStore({ activePanelId: null }))
+    service.preferRightbarWidth(2 / 3)
+    expect(panels.preferRightbarWidth).toHaveBeenCalledWith(2 / 3)
+    expect(panels.openRightbar).not.toHaveBeenCalled()
+    expect(panels.setRightbar).not.toHaveBeenCalled()
+  })
   it('forwards right column transitions to the constructor-supplied actions', () => {
     const panels = fakePanels()
     const service = new LayoutController(panels, () => true, createSnapshotStore({ activePanelId: null }))

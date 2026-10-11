@@ -31,6 +31,8 @@ type LayoutInfo = {
    * the frame and closing the panel preserve this preference.
    */
   rightbar: number | null
+  /** A drag or explicit occupant preference takes precedence over subsequent defaults. */
+  rightbarWidthChosen: boolean
   /**
    * Whether the right panel is drawn at all, in either presentation.
    *
@@ -62,6 +64,7 @@ type LayoutActions = {
   toggleSidebar: (draft: LayoutState) => void
   setViewportWidth: (draft: LayoutState, width: number) => void
   setRightbar: (draft: LayoutState, px: number) => void
+  preferRightbarWidth: (draft: LayoutState, ratio: number) => void
   openRightbar: (draft: LayoutState, track: boolean, fullscreen: boolean) => void
   closeRightbar: (draft: LayoutState) => void
 }
@@ -84,6 +87,7 @@ export function createLayoutStore(): EngineStoreHandle<LayoutState, LayoutAction
         viewportWidth: window.innerWidth,
         narrowExpanded: false,
         rightbar: null,
+        rightbarWidthChosen: false,
         rightbarShown: false,
         rightbarTrack: false,
         rightbarFullscreen: false,
@@ -121,8 +125,16 @@ export function createLayoutStore(): EngineStoreHandle<LayoutState, LayoutAction
         d.layoutInfo.viewportWidth = width
       },
       setRightbar: (d, px: number) => {
+        d.layoutInfo.rightbarWidthChosen = true
         d.layoutInfo.rightbarInstant = false
         d.layoutInfo.rightbar = clampWidth(px, RIGHTBAR_MIN, Math.max(RIGHTBAR_MIN, d.layoutInfo.viewportWidth * RIGHTBAR_MAX_RATIO))
+      },
+      preferRightbarWidth: (d, ratio: number) => {
+        if (d.layoutInfo.rightbarWidthChosen) return
+        d.layoutInfo.rightbarWidthChosen = true
+        d.layoutInfo.rightbarInstant = true
+        d.layoutInfo.rightbar = clampWidth(Math.round(d.layoutInfo.viewportWidth * ratio), RIGHTBAR_MIN,
+          Math.max(RIGHTBAR_MIN, d.layoutInfo.viewportWidth * RIGHTBAR_MAX_RATIO))
       },
       openRightbar: (d, track: boolean, fullscreen: boolean) => {
         if (!d.layoutInfo.rightbarShown || d.layoutInfo.rightbarTrack !== track || d.layoutInfo.rightbarFullscreen !== fullscreen) {

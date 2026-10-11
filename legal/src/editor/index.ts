@@ -38,6 +38,12 @@ export const editorConfigSchema = z.strictObject({
   maxDiscoveryBytes: z.number().int().positive().default(1024 * 1024),
   loadTimeoutMs: z.number().int().positive().max(2_147_483_647).default(60_000),
   saveTimeoutMs: z.number().int().positive().max(2_147_483_647).default(30_000),
+  uiMode: z.enum(['classic', 'notebookbar']).default('classic'),
+  showRuler: z.boolean().default(false),
+  showPropertiesSidebar: z.boolean().default(false),
+  showTrackedChanges: z.boolean().default(true),
+  recordChanges: z.boolean().default(true),
+  paneWidthRatio: z.number().positive().max(0.7).default(2 / 3),
 })
 
 /** Mount document-scoped WOPI callbacks without changing ordinary Host authentication.

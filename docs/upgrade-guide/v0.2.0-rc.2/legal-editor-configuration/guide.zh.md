@@ -9,9 +9,13 @@ description: "DeepSeek Legal 编辑器补丁改为配置文档插件，并要求
 
 ## 变更
 
+修订显示和人工修订记录默认启用。若需更改初始设置，可在 `config.editor` 下将 `showTrackedChanges` 或 `recordChanges` 设为 `false`；审阅期间仍可使用编辑器菜单。
+
 fork 的可选编辑器补丁在现有 `deepseek-legal-redlining` 条目中启用 `config.editor`。它替代独立的 `deepseek-legal-editor` Loader 条目，使本包只贡献一个 Client factory。自定义编辑器配置现在除 `parentOrigin` 外，还需要 `editorOrigin` 和 `callbackOrigin`。文档存储和默认文档工具补丁保持现有行为。
 
 ## 迁移
+
+编辑器默认使用经典工具栏，并隐藏标尺和属性侧栏。可选 `config.editor` 字段 `uiMode`、`showRuler`、`showPropertiesSidebar` 和 `paneWidthRatio` 可覆盖这些设置。面板优先请求框架宽度的 `2/3`，同时保留用户此前拖动选择的宽度及聊天区最小空间。CODE 专用 Compose 实例启用 home mode（十个文档/二十个连接）并关闭更新弹窗；`LEGAL_EDITOR_HOME_MODE` 和 `LEGAL_EDITOR_UPDATE_POPUP` 提供部署覆盖设置。文档数据无需迁移。
 
 1. 重新构建独立的[法律 bundle](../../../../legal/README.zh.md#build-and-check)。
 2. 先应用[文档工具补丁](../../../../legal/cordis.patch.yml)，再应用[当前编辑器补丁](../../../../legal/editor/cordis.patch.yml)。删除手动添加的 `deepseek-legal-editor` Loader 条目，将其编辑器设置放入 `deepseek-legal-redlining` 的 `config.editor` 下。
